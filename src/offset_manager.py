@@ -1,5 +1,5 @@
 from src.spark_session_handler import SPARK
-from src.settings import HDFS_KAFKA_OFFSET_TABLE_DIR
+from src.settings import KAFKA_OFFSET_PATH
 from pyspark.sql.functions import max as pyspark_max
 from pyspark.sql import Row
 from pyspark.sql.utils import AnalysisException
@@ -15,7 +15,7 @@ class SparkOffset:
     @classmethod
     def get_latest_offset_by_topic_partition(cls, topic, partition):
         try:
-            offset_df = SPARK.read.format('delta').load(HDFS_KAFKA_OFFSET_TABLE_DIR)
+            offset_df = SPARK.read.format('delta').load(KAFKA_OFFSET_PATH)
         except AnalysisException:
             print("INITIALIZING OFFSETS")
             offset_df = cls.initialize_offset_table(topic, partition).to_spark_df()
@@ -33,7 +33,7 @@ class SparkOffset:
         return spark_offset_obj
 
     def save(self):
-        self.to_spark_df().write.format('delta').mode('append').save(HDFS_KAFKA_OFFSET_TABLE_DIR)
+        self.to_spark_df().write.format('delta').mode('append').save(KAFKA_OFFSET_PATH)
 
     def to_spark_df(self):
         offset_row = Row(topic=self.topic, partition=self.partition, offset=self.offset)

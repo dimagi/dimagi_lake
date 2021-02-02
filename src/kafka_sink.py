@@ -6,8 +6,7 @@ from src.pull_records import pull_cases_with_meta, pull_forms_with_meta, pull_le
 from src.spark_session_handler import SPARK
 from delta.tables import DeltaTable
 from pyspark.sql.utils import AnalysisException
-from src.settings import HDFS_HQ_DATA_TABLE_DIR
-
+from src.settings import HQ_DATA_PATH
 
 class KafkaSink:
 
@@ -41,9 +40,11 @@ class KafkaSink:
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         print(min_offset)
         print(max_offset)
+        
         decoded_kafka_messages = self.decode_kafka_message_df(kafka_messages.toJSON().collect())
         all_records = self.get_all_records(decoded_kafka_messages)
-
+        del kafka_messages
+        del decoded_kafka_messages
         self.merge_location_information(all_records)
         self.bulk_merge(all_records)
         self.repartition_records()
@@ -64,9 +65,8 @@ class KafkaSink:
               .option("kafka.bootstrap.servers", self.bootstrap_server)
               .option("subscribe", self.topic)
               .option("startingOffsets", json.dumps({self.topic: {"0": self.latest_offset}}))
-              .option("endingOffsets", json.dumps({self.topic: {"0": -1}}))
               .load())
-        return df
+        return self.spark_session.createDataFrame(df.head(50000))
 
     def get_all_records(self, record_metadata):
 
@@ -93,11 +93,11 @@ class KafkaSink:
             cases_df = SPARK.read.json(SPARK.sparkContext.parallelize([json.dumps(doc) for doc in docs]))
             try:
                 print(f"{len(docs)} docs being written")
-                records_table = f"{HDFS_HQ_DATA_TABLE_DIR}/{doc_type}"
+                records_table = f"{HQ_DATA_PATH}/{doc_type}"
                 deltaTable = DeltaTable.forPath(SPARK, records_table)
                 deltaTable.alias("existing_cases").merge(
                     cases_df.alias("incoming_cases"),
-                    "existing_cases.case_id = incoming_cases.case_id") \
+                    "existing_cases.case_id = incoming_cases.case_id and existing_cases.district_id=incoming_cases.district_id") \
                     .whenMatchedUpdateAll() \
                     .whenNotMatchedInsertAll() \
                     .execute()
