@@ -66,7 +66,9 @@ class KafkaSink:
               .option("subscribe", self.topic)
               .option("startingOffsets", json.dumps({self.topic: {"0": self.latest_offset}}))
               .load())
-        return self.spark_session.createDataFrame(df.head(50000))
+
+
+        return df if df.count()<=50000 else self.spark_session.createDataFrame(df.head(50000))
 
     def get_all_records(self, record_metadata):
 
