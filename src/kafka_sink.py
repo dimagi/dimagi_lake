@@ -8,8 +8,8 @@ from delta.tables import DeltaTable
 from pyspark.sql.utils import AnalysisException
 from src.settings import HQ_DATA_PATH
 
-class KafkaSink:
 
+class KafkaSink:
     spark_session = None
     topic = None
     partition = 0
@@ -34,16 +34,10 @@ class KafkaSink:
         if kafka_messages.count() == 0:
             print("ALL MESSAGES FROM KAFKA ARE READ, NONE LEFT!!")
             return
-
-        min_offset = kafka_messages.agg(pyspark_min('offset').alias('min_offset')).first().min_offset
-        max_offset = kafka_messages.agg(pyspark_max('offset').alias('max_offset')).first().max_offset
-        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-        print(min_offset)
-        print(max_offset)
         
-        decoded_kafka_messages = self.decode_kafka_message_df(kafka_messages.toJSON().collect())
+        decoded_kafka_messages, max_offset = self.decode_kafka_message_df(kafka_messages.toJSON().collect())
         all_records = self.get_all_records(decoded_kafka_messages)
-        del kafka_messages
+        kafka_messages.unpersist()
         del decoded_kafka_messages
         self.merge_location_information(all_records)
         self.bulk_merge(all_records)
@@ -52,23 +46,26 @@ class KafkaSink:
 
     def decode_kafka_message_df(self, kafka_messages):
         messages = list()
+        max_offset = -2
         for message in kafka_messages:
             message = json.loads(message)
             message['key'] = base64.b64decode(message['key'])
             message['value'] = json.loads(base64.b64decode(message['value']))
+            if int(message['offset']) > max_offset:
+                max_offset = int(message['offset'])
             messages.append(message)
-        return messages
+        return messages, max_offset
 
     def pull_messages_since_last_read(self):
+        latest_offset = self.latest_offset
         df = (self.spark_session.read
               .format("kafka")
               .option("kafka.bootstrap.servers", self.bootstrap_server)
               .option("subscribe", self.topic)
-              .option("startingOffsets", json.dumps({self.topic: {"0": self.latest_offset}}))
+              .option("startingOffsets", json.dumps({self.topic: {"0": latest_offset}}))
+              .option("endingOffsets", json.dumps({self.topic: {"0": latest_offset+100000}}))
               .load())
-
-
-        return df if df.count()<=50000 else self.spark_session.createDataFrame(df.head(50000))
+        return df
 
     def get_all_records(self, record_metadata):
 
@@ -92,20 +89,21 @@ class KafkaSink:
 
     def bulk_merge(self, all_records):
         for doc_type, docs in all_records.items():
-            cases_df = SPARK.read.json(SPARK.sparkContext.parallelize([json.dumps(doc) for doc in docs]))
+            docs_df = SPARK.read.json(SPARK.sparkContext.parallelize([json.dumps(doc) for doc in docs]))
+
             try:
                 print(f"{len(docs)} docs being written")
-                records_table = f"{HQ_DATA_PATH}/{doc_type}"
+                records_table = f"{HQ_DATA_PATH}/{self.topic}/{doc_type}"
                 deltaTable = DeltaTable.forPath(SPARK, records_table)
-                deltaTable.alias("existing_cases").merge(
-                    cases_df.alias("incoming_cases"),
-                    "existing_cases.case_id = incoming_cases.case_id and existing_cases.district_id=incoming_cases.district_id") \
+                deltaTable.alias("existing_docs").merge(
+                    docs_df.alias("incoming_docs"),
+                    "existing_docs._id = incoming_docs._id and existing_docs.supervisor_id=incoming_docs.supervisor_id") \
                     .whenMatchedUpdateAll() \
                     .whenNotMatchedInsertAll() \
                     .execute()
             except AnalysisException:
                 print("FIRST RECORD BEING WRITTEN")
-                cases_df.coalesce(3).write.format('delta').partitionBy("district_id").mode('overwrite').save(records_table)
+                docs_df.coalesce(2).write.format('delta').mode('overwrite').save(records_table)
 
     def repartition_records(self):
         pass
