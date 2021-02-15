@@ -21,10 +21,10 @@ from src.settings import (
     KAFKA_CASE_TOPIC
 
 )
-
+import sys
 
 kafka_sink = KafkaSink(spark_session=SPARK,
-                       topic=KAFKA_CASE_TOPIC,
+                       topic=sys.argv[1],
                        partition=0,
                        bootstrap_server=f"{KAFKA_BOOTSTRAP_SERVER_HOST}:{KAFKA_BOOTSTRAP_SERVER_PORT}"
                        )
