@@ -1,22 +1,26 @@
-import os
 
 KAFKA_CASE_TOPIC = 'generator-case'
 KAFKA_FORM_TOPIC = 'generator-form'
 KAFKA_LEDGER_TOPIC = 'generator-ledger'
-KAFKA_BOOTSTRAP_SERVER_HOST = os.getenv('KAFKA_BOOTSTRAP_SERVER_HOST', 'localhost')
-KAFKA_BOOTSTRAP_SERVER_PORT = os.getenv('KAFKA_BOOTSTRAP_SERVER_PORT', '9092')
-HADOOP_SERVER_HOST = os.getenv('HADOOP_SERVER_HOST', 'localhost')
-HADOOP_SERVER_PORT = os.getenv('HADOOP_SERVER_PORT', '9000')
-# HDFS_HQ_CASE_TABLE_DIR = os.getenv('HDFS_HQ_CASE_TABLE_DIR', '')
-# HDFS_HQ_FORM_TABLE_DIR = os.getenv('HDFS_HQ_FORM_TABLE_DIR', '')
-HDFS_KAFKA_OFFSET_TABLE_DIR = os.getenv('HDFS_KAFKA_OFFSET_TABLE_DIR', 'checkpoints')
+KAFKA_BOOTSTRAP_SERVER_HOST = 'localhost'
+KAFKA_BOOTSTRAP_SERVER_PORT = 9092
+HADOOP_SERVER_HOST = 'localhost'
+HADOOP_SERVER_PORT = 9000
 
-CHECKPOINT_BASE_DIR = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/{HDFS_KAFKA_OFFSET_TABLE_DIR}'
+METASTORE_HOST = 'localhost'
+METASTORE_PORT = 5432
+METASTORE_DB = 'metastore_db'
+METASTORE_USERNAME = ''
+METASTORE_PASSWORD = ''
+
+METASTORE_CONNECT_URI = f'jdbc:postgresql://{METASTORE_HOST}:{METASTORE_PORT}/{METASTORE_DB}?ceateDatabaseIfNotExist=true'
+
+CHECKPOINT_BASE_DIR = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/kafka_offsets'
 HQ_DATA_PATH = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/commcare'
 DATABASE_SETTINGS = {
-    'host': os.getenv('DATABASE_HOST'),
-    'database': os.getenv('DATABASE_NAME'),
-    'user': os.getenv('DATABASE_USER'),
-    'password': os.getenv('DATABASE_PASS')
+    'host': 'localhost',
+    'database': 'dimagi',
+    'user': 'dimagi',
+    'password': 'dimagi'
 }
 MAX_RECORDS_TO_PROCESS = 50000

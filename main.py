@@ -17,8 +17,7 @@ from src.kafka_sink import KafkaSink
 from src.spark_session_handler import SPARK
 from src.settings import (
     KAFKA_BOOTSTRAP_SERVER_HOST,
-    KAFKA_BOOTSTRAP_SERVER_PORT,
-    KAFKA_CASE_TOPIC
+    KAFKA_BOOTSTRAP_SERVER_PORT
 
 )
 import sys
