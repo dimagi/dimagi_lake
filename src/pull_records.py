@@ -1,50 +1,30 @@
 
-import psycopg2
-from src.settings import DATABASE_SETTINGS
+from src.settings import DATA_LAKE_DOMAIN
 import json
+
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 
 
 def pull_cases_with_meta(cases_meta):
-    case_types = {json.loads(meta.value).type for meta in cases_meta}
-    case_ids = {json.loads(meta.value).document_id for meta in cases_meta}
-    return pull_case_by_case_type(case_types, case_ids)
+    case_ids = {json.loads(meta.value)['document_id'] for meta in cases_meta}
+    return pull_cases_by_ids(case_ids)
 
 
-def pull_forms_with_meta(cases_meta):
-    form_types = {json.loads(meta.value).type.replace('http://openrosa.org/formdesigner/', '') for meta in cases_meta}
-    form_ids = {json.loads(meta.value).document_id for meta in cases_meta}
-    return pull_form_by_form_type(form_types, form_ids)
+def pull_forms_with_meta(forms_meta):
+    form_ids = {json.loads(meta.value)['document_id'] for meta in forms_meta}
+    return pull_forms_by_ids(form_ids)
 
 
-#TODO  This would be changed while integrating with HQ
-def pull_case_by_case_type(case_types, case_ids):
-    conn = psycopg2.connect(**DATABASE_SETTINGS)
-    cur = conn.cursor()
-    sql = """
-    SELECT record_json from cases where type in %s and doc_id in %s;
-    """
-    cur.execute(sql, (tuple(case_types), tuple(case_ids)))
-
-    return [record[0] for record in cur.fetchall()]
+def pull_cases_by_ids(case_ids):
+    case_accessor = CaseAccessors(DATA_LAKE_DOMAIN)
+    return [case.to_json() for case in case_accessor.get_cases(case_ids)]
 
 
-#TODO  This would be changed while integrating with HQ
-def pull_form_by_form_type(form_types, form_ids):
-    conn = psycopg2.connect(**DATABASE_SETTINGS)
-    cur = conn.cursor()
-    sql = """
-    SELECT record_json from forms where type in %s and doc_id in %s;
-    """
-    cur.execute(sql, (tuple(form_types), tuple(form_ids)))
-    data = list()
-    for record in cur.fetchall():
-        form = record[0]
-        form['type'] = form['xmnls'].replace('http://openrosa.org/formdesigner/', '')
-        data.append(form)
+def pull_forms_by_ids(form_ids):
+    form_accessor = FormAccessors(DATA_LAKE_DOMAIN)
+    forms_json = [form.to_json() for form in form_accessor.get_forms(form_ids)]
 
-    return data
-
-
-def pull_ledgers_with_meta(ledgers_meta):
-    pass
+    for form in forms_json:
+        form['type'] = form['xmlns'].replace('http://openrosa.org/formdesigner/', '')
+    return forms_json
 

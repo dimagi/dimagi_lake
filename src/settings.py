@@ -1,7 +1,6 @@
 
-KAFKA_CASE_TOPIC = 'generator-case'
-KAFKA_FORM_TOPIC = 'generator-form'
-KAFKA_LEDGER_TOPIC = 'generator-ledger'
+KAFKA_CASE_TOPIC = 'case-sql'
+KAFKA_FORM_TOPIC = 'form-sql'
 KAFKA_BOOTSTRAP_SERVER_HOST = 'localhost'
 KAFKA_BOOTSTRAP_SERVER_PORT = 9092
 HADOOP_SERVER_HOST = 'localhost'
@@ -23,4 +22,5 @@ DATABASE_SETTINGS = {
     'user': 'dimagi',
     'password': 'dimagi'
 }
-MAX_RECORDS_TO_PROCESS = 50000
+MAX_RECORDS_TO_PROCESS = 500
+DATA_LAKE_DOMAIN = 'nutrition-project'

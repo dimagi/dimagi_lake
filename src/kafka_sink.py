@@ -4,11 +4,12 @@ from src.settings import (
     HQ_DATA_PATH,
     KAFKA_CASE_TOPIC,
     KAFKA_FORM_TOPIC,
-    KAFKA_LEDGER_TOPIC,
     MAX_RECORDS_TO_PROCESS,
     CHECKPOINT_BASE_DIR,
     METASTORE_DB
 )
+from corehq.apps.es import users
+from corehq.apps.locations.models import SQLLocation
 
 
 class KafkaSink:
@@ -22,7 +23,9 @@ class KafkaSink:
         self.topic = topic
         self.partition = partition
         self.bootstrap_server = bootstrap_server
-        self.db_tables = [table.name for table in self.spark_session.catalog.listTables(METASTORE_DB)]
+        self.db_tables = [table.name for table in self.spark_session.catalog.listTables('default')]
+        self.table_name = self.topic.replace('-', '_')
+        self.spark_session.sql("SET spark.databricks.delta.schema.autoMerge.enabled = true")
 
     def sink_kafka(self):
         kafka_messages = self.pull_messages_since_last_read()
@@ -57,30 +60,34 @@ class KafkaSink:
             return pull_cases_with_meta(record_metadata)
         elif self.topic == KAFKA_FORM_TOPIC:
             return pull_forms_with_meta(record_metadata)
-        elif self.topic == KAFKA_LEDGER_TOPIC:
-            return pull_ledgers_with_meta(record_metadata)
 
-    # TODO change this while integrating with HQ
     def merge_location_information(self, records):
+        user_ids = [record['user_id'] for record in records]
+        user_with_loc = {user['_id']: user['location_id'] for user in (users.UserES()
+                                                                        .user_ids(user_ids)
+                                                                        .fields(['_id', 'location_id'])
+                                                                        .run().hits)}
+
         for doc in records:
-            if self.topic == KAFKA_CASE_TOPIC:
-                flw_num = doc['owner_id'].split("_")[1]
-            elif self.topic == KAFKA_FORM_TOPIC:
-                flw_num = doc['user_id'].split("_")[1]
-            doc['supervisor_id'] = f'supervisor_{flw_num}'
-            doc['block_id'] = f'block_{flw_num}'
-            doc['district_id'] = f'district_{flw_num}'
-            doc['state_id'] = f'state_{flw_num}'
+            location_id = user_with_loc[doc['user_id']]
+            ancestors = SQLLocation.by_location_id(location_id).get_ancestors(include_self=True)
+            location_info = dict()
+            for loc in ancestors:
+                location_type = loc.location_type.name
+                location_info[f"{location_type}_id"] = loc.location_id
+                location_info[f"{location_type}_name"] = loc.name
+
+            doc['location_info'] = location_info
 
     def bulk_merge(self, all_records):
         docs_df = (self.spark_session
                    .read.json(self.spark_session
-                              .sparkContext.parallelize([json.dumps(doc) for doc in all_records])))
+                              .sparkContext.parallelize([json.dumps(doc).replace(": []",": [{}]") for doc in all_records])))
 
         if self.topic in self.db_tables:
-            docs_df.createOrReplaceTempView("updates")
-            self.spark_session.sql(self.merge_query(existing_tablename=self.topic,
-                                                    updates_tablename='updates'))
+            docs_df.createOrReplaceTempView(f"{self.table_name}_updates")
+            self.spark_session.sql(self.merge_query(existing_tablename=self.table_name,
+                                                    updates_tablename=f"{self.table_name}_updates"))
 
             # This commented Code is actually more straight forward way to merge data.
             # But because the bug(fixed in https://github.com/apache/spark/pull/29667) it Throws error.
@@ -95,11 +102,11 @@ class KafkaSink:
             #     .execute()
         else:
             print(f"New Table is being created with name {self.topic}")
-            docs_df.write.saveAsTable(self.topic,
-                                      format='delta',
-                                      mode='overwrite',
-                                      path=f"{HQ_DATA_PATH}/{self.topic}")
-            self.db_tables = [table.name for table in self.spark_session.catalog.listTables(METASTORE_DB)]
+            docs_df.write.partitionBy('type', 'supervisor_id').saveAsTable(self.table_name,
+                                                                           format='delta',
+                                                                           mode='overwrite',
+                                                                           path=f"{HQ_DATA_PATH}/{self.topic}")
+            self.db_tables = [table.name for table in self.spark_session.catalog.listTables('default')]
 
         print(f"{len(docs)} docs were written to {self.topic}")
 
