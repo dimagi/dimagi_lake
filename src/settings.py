@@ -24,3 +24,11 @@ DATABASE_SETTINGS = {
 }
 MAX_RECORDS_TO_PROCESS = 500
 DATA_LAKE_DOMAIN = 'nutrition-project'
+
+ALLOWED_FORMS = [
+        "http://openrosa.org/formdesigner/23145798-6570-4EEA-BF9F-17AA80D99103",
+        "http://openrosa.org/formdesigner/EB3CBEB0-396E-438B-AA81-DCC3CCD4E55E",
+]
+ALLOWED_CASES = [
+        "person_case"
+]
