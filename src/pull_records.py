@@ -14,6 +14,5 @@ def pull_forms_by_ids(domain, form_ids):
 
     for form in forms_json:
         form['type'] = form['xmlns'].replace('http://openrosa.org/formdesigner/', '')
-        form['_id'] = form['meta']['instanceID']
     return forms_json
 
