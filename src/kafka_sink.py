@@ -40,11 +40,12 @@ class KafkaSink:
                 print("NO RECORDS")
                 return
 
-            for domain, messages in splitted_messages:
-                all_records = self.get_all_records(domain, messages)
-                self.merge_location_information(all_records)
-                self.bulk_merge(all_records)
-                self.repartition_records()
+            for domain, messages in splitted_messages.items():
+                for doc_type, record_ids in messages.items():
+                    all_records = self.get_all_records(domain, record_ids)
+                    self.merge_location_information(all_records)
+                    self.bulk_merge(domain, all_records)
+                    self.repartition_records()
 
         query = (kafka_messages.writeStream
                  .foreachBatch(process_records)
@@ -55,13 +56,13 @@ class KafkaSink:
     def split_message_by_domain(self, kafka_msgs_df):
         kafka_messages = kafka_msgs_df.select('value').collect()
 
-        splitted_messages = defaultdict(list)
+        splitted_messages = defaultdict(lambda: defaultdict(list))
         for msg in kafka_messages:
             msg_meta = json.loads(msg.value)
             if not (msg_meta['document_subtype'] in ALLOWED_CASES or
                     msg_meta['document_subtype'] in ALLOWED_FORMS):
                 continue
-            splitted_messages[msg_meta['domain']].append(msg_meta['document_id'])
+            splitted_messages[msg_meta['domain']][msg_meta['document_subtype']].append(msg_meta['document_id'])
         return splitted_messages
 
     def pull_messages_since_last_read(self):
@@ -101,24 +102,25 @@ class KafkaSink:
 
     def bulk_merge(self, domain, all_records):
 
+        doc_type = all_records[0]['type']
         docs_df = (self.spark_session
                    .read.json(self.spark_session
                               .sparkContext.parallelize([json.dumps(doc, cls=CommCareJSONEncoder).replace(": []", ": [{}]") for doc in all_records])))
 
         flattened_df = get_flatten_df(docs_df)
-        table_name = f"{domain}_{self.topic}".replace('-', '_').lower()
+        table_name = f"{domain}_{self.topic}_{doc_type}".replace('-', '_').lower()
         if table_name in self.db_tables:
             flattened_df.createOrReplaceTempView(f"{table_name}_updates")
             self.spark_session.sql(self.merge_query(existing_tablename=table_name,
                                                     updates_tablename=f"{table_name}_updates"))
         else:
             print(f"New Table is being created with name {self.topic}")
-            flattened_df.write.partitionBy('type', 'supervisor_id')\
+            flattened_df.write.partitionBy('supervisor_id')\
                 .option('overwriteSchema', True)\
                 .saveAsTable(table_name,
                              format='delta',
                              mode='overwrite',
-                             path=f"{HQ_DATA_PATH}/{domain}/{self.topic}/{table_name}")
+                             path=f"{HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}")
             self.db_tables = [table.name for table in self.spark_session.catalog.listTables('default')]
 
         print(f"{len(all_records)} docs were written to {self.topic}")
