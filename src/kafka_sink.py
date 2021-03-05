@@ -13,7 +13,7 @@ from corehq.apps.es import users
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.json import CommCareJSONEncoder
 from collections import defaultdict
-from src.utils import get_flatten_df
+from src.utils import custom_tranformation
 
 
 class KafkaSink:
@@ -43,8 +43,8 @@ class KafkaSink:
             for domain, messages in splitted_messages.items():
                 for doc_type, record_ids in messages.items():
                     all_records = self.get_all_records(domain, record_ids)
-                    self.merge_location_information(all_records)
-                    self.bulk_merge(domain, all_records)
+                    records_with_location = self.merge_location_information(all_records)
+                    self.bulk_merge(domain, records_with_location)
                     self.repartition_records()
 
         query = (kafka_messages.writeStream
@@ -90,8 +90,9 @@ class KafkaSink:
                                                                         .user_ids(user_ids)
                                                                         .fields(['_id', 'location_id'])
                                                                         .run().hits)}
+        records_with_location = list()
         for doc in records:
-            if not get_user_id(doc):
+            if not (get_user_id(doc) and user_with_loc[get_user_id(doc)]):
                 continue
             location_id = user_with_loc[get_user_id(doc)]
             ancestors = SQLLocation.by_location_id(location_id).get_ancestors(include_self=True)
@@ -99,23 +100,22 @@ class KafkaSink:
                 location_type = loc.location_type.name
                 doc[f"{location_type}_id"] = loc.location_id
                 doc[f"{location_type}_name"] = loc.name
+            records_with_location.append(doc)
+        return records_with_location
 
     def bulk_merge(self, domain, all_records):
-
+        records_rdd = self.spark_session.sparkContext.parallelize(all_records)
+        transformed_records = records_rdd.map(custom_tranformation)
         doc_type = all_records[0]['type']
-        docs_df = (self.spark_session
-                   .read.json(self.spark_session
-                              .sparkContext.parallelize([json.dumps(doc, cls=CommCareJSONEncoder).replace(": []", ": [{}]") for doc in all_records])))
-
-        flattened_df = get_flatten_df(docs_df)
+        docs_df = self.spark_session.read.json(transformed_records)
         table_name = f"{domain}_{self.topic}_{doc_type}".replace('-', '_').lower()
         if table_name in self.db_tables:
-            flattened_df.createOrReplaceTempView(f"{table_name}_updates")
+            docs_df.createOrReplaceTempView(f"{table_name}_updates")
             self.spark_session.sql(self.merge_query(existing_tablename=table_name,
                                                     updates_tablename=f"{table_name}_updates"))
         else:
             print(f"New Table is being created with name {self.topic}")
-            flattened_df.write.partitionBy('supervisor_id')\
+            docs_df.write.partitionBy('supervisor_id')\
                 .option('overwriteSchema', True)\
                 .saveAsTable(table_name,
                              format='delta',

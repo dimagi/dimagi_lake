@@ -1,29 +1,20 @@
-from pyspark.sql.functions import col
+import json
+from corehq.util.json import CommCareJSONEncoder
 
 
-def get_flatten_df(nested_df):
-    stack = [((), nested_df)]
-    columns = []
-    while len(stack) > 0:
-        parents, df = stack.pop()
+def flatten_json(data_dict, sep='__'):
+    out = {}
 
-        transformed_parents = [parent.replace('.', '_').strip('`') for parent in list(parents)]
-        transformed_parents = tuple(transformed_parents)
-        flat_cols = [
-            col(".".join(parents + (c[0],))).alias("__".join(transformed_parents + (c[0],)))
-            for c in df.dtypes
-            if c[1][:6] != "struct"
-        ]
+    def flatten(x, name=''):
+        if type(x) is dict:
+            for a in x:
+                flatten(x[a], name + a + sep)
+        else:
+            out[name[:-len(sep)]] = x
 
-        nested_cols = [
-            c[0]
-            for c in df.dtypes
-            if c[1][:6] == "struct"
-        ]
+    flatten(data_dict)
+    return json.dumps(out, cls=CommCareJSONEncoder)
 
-        columns.extend(flat_cols)
 
-        for nested_col in nested_cols:
-            projected_df = df.select(f'`{nested_col}`.*')
-            stack.append((parents + (f'`{nested_col}`',), projected_df))
-    return nested_df.select(columns)
+def custom_tranformation(record):
+    return flatten_json(record)
