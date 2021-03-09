@@ -41,6 +41,7 @@ class KafkaSink:
                 return
 
             for domain, messages in splitted_messages.items():
+                
                 for doc_type, record_ids in messages.items():
                     all_records = self.get_all_records(domain, record_ids)
                     records_with_location = self.merge_location_information(all_records)

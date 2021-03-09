@@ -13,7 +13,7 @@ def flatten_json(data_dict, sep='__'):
             out[name[:-len(sep)]] = x
 
     flatten(data_dict)
-    return json.dumps(out, cls=CommCareJSONEncoder)
+    return json.dumps(out, cls=CommCareJSONEncoder).replace(': []', ': [{}]')
 
 
 def custom_tranformation(record):
