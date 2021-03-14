@@ -15,6 +15,7 @@ from collections import defaultdict
 from src.utils import custom_tranformation
 
 
+# TODO: Split the class into two, one for Kafka related work and one for processing and writting the record
 class KafkaSink:
     spark_session = None
     topic = None

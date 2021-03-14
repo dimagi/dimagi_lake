@@ -14,16 +14,19 @@ METASTORE_PASSWORD = ''
 
 METASTORE_CONNECT_URI = f'jdbc:postgresql://{METASTORE_HOST}:{METASTORE_PORT}/{METASTORE_DB}?ceateDatabaseIfNotExist=true'
 
+
+# For HDFS
 # CHECKPOINT_BASE_DIR = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/kafka_offsets'
 # HQ_DATA_PATH = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/commcare'
+
+# For Local File system
+# CHECKPOINT_BASE_DIR = f'file:///tmp/dimagi-lake/kafka_offsets'
+# HQ_DATA_PATH = f'file:///tmp/dimagi-lake/commcare'
 
 CHECKPOINT_BASE_DIR = f's3a://dimagi-lake/kafka_offsets'
 HQ_DATA_PATH = f's3a://dimagi-lake/commcare'
 
-S3_BLOB_DB_SETTINGS = {
-    'access_key': '',
-    'secrete_key': ''
-}
+
 MAX_RECORDS_TO_PROCESS = 500
 DATA_LAKE_DOMAIN = ['inp-dashboard']
 
