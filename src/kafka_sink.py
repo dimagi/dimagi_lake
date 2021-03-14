@@ -11,7 +11,6 @@ from src.settings import (
 )
 from corehq.apps.es import users
 from corehq.apps.locations.models import SQLLocation
-from corehq.util.json import CommCareJSONEncoder
 from collections import defaultdict
 from src.utils import custom_tranformation
 
@@ -34,14 +33,12 @@ class KafkaSink:
         kafka_messages = self.pull_messages_since_last_read()
 
         def process_records(kafka_msgs_df, batch_id):
-
             splitted_messages = self.split_message_by_domain(kafka_msgs_df)
             if len(splitted_messages) == 0:
                 print("NO RECORDS")
                 return
 
             for domain, messages in splitted_messages.items():
-                
                 for doc_type, record_ids in messages.items():
                     all_records = self.get_all_records(domain, record_ids)
                     records_with_location = self.merge_location_information(all_records)
@@ -54,6 +51,15 @@ class KafkaSink:
                  .start())
         query.awaitTermination()
 
+    def pull_messages_since_last_read(self):
+        df = (self.spark_session.readStream
+              .format("kafka")
+              .option("kafka.bootstrap.servers", self.bootstrap_server)
+              .option("subscribe", self.topic)
+              .option("maxOffsetsPerTrigger", MAX_RECORDS_TO_PROCESS)
+              .load())
+        return df
+
     def split_message_by_domain(self, kafka_msgs_df):
         kafka_messages = kafka_msgs_df.select('value').collect()
 
@@ -65,15 +71,6 @@ class KafkaSink:
                 continue
             splitted_messages[msg_meta['domain']][msg_meta['document_subtype']].append(msg_meta['document_id'])
         return splitted_messages
-
-    def pull_messages_since_last_read(self):
-        df = (self.spark_session.readStream
-              .format("kafka")
-              .option("kafka.bootstrap.servers", self.bootstrap_server)
-              .option("subscribe", self.topic)
-              .option("maxOffsetsPerTrigger", MAX_RECORDS_TO_PROCESS)
-              .load())
-        return df
 
     def get_all_records(self, domain, record_metadata):
 

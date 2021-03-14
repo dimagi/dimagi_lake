@@ -1,6 +1,4 @@
-
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-
 
 
 def pull_cases_by_ids(domain, case_ids):
