@@ -41,10 +41,10 @@ This is an Spark Application Which is used to ingest Form and Case Data into the
 - [x] Capture republish of Forms and Cases
 - [x] Allows on-the-fly custom transformation before saving records.
 - [x] Allows field addition and deletion in cases/forms
-- [] Capture Form deletes
-- [] Capture case deletes
-- [] Capture Location Changes
-- [] Allows Field datatype change in cases/forms
+- [ ] Capture Form deletes
+- [ ] Capture case deletes
+- [ ] Capture Location Changes
+- [ ] Allows Field datatype change in cases/forms
 
 ## How to Setup
 
