@@ -13,8 +13,6 @@ Sudo code.
 7. Save the new offsets to HDFS.
 """
 import sys
-sys.path.append('/home/hadoopuser/projects/commcare-hq')
-
 from src.kafka_sink import KafkaSink
 from src.spark_session_handler import SPARK
 from src.settings import (
