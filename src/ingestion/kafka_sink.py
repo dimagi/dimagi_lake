@@ -11,7 +11,7 @@ from datalake_conts import (
 from collections import defaultdict
 from src.ingestion.record_processor import FormProcessor, CaseProcessor
 from src.ingestion.datalake_writer import DatalakeWriter
-
+from spark_session_handler import SPARK
 
 class KafkaSink:
     topic = None
@@ -37,6 +37,7 @@ class KafkaSink:
             print("NO RECORDS")
             return
 
+        total_records_processed = 0
         for domain, messages in splitted_messages.items():
             for doc_type, record_ids in messages.items():
                 data_url = f"{HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}"
@@ -46,9 +47,11 @@ class KafkaSink:
 
                 processed_records = record_processor.get_processed_records()
                 datalake_writer.write_data(table_name, processed_records)
+                total_records_processed += len(record_ids)
+        print("COMPLETED BATCH OF {} records".format(total_records_processed))
 
     def pull_messages_since_last_read(self):
-        df = (self.spark_session.readStream
+        df = (SPARK.readStream
               .format("kafka")
               .option("kafka.bootstrap.servers", self.bootstrap_server)
               .option("subscribe", self.topic)
@@ -64,7 +67,7 @@ class KafkaSink:
             msg_meta = json.loads(msg.value)
             if not ((msg_meta['document_subtype'] in ALLOWED_CASES or
                     msg_meta['document_subtype'] in ALLOWED_FORMS) and
-                    msg['domain'] in DATA_LAKE_DOMAIN):
+                    msg_meta['domain'] in DATA_LAKE_DOMAIN):
                 continue
             splitted_messages[msg_meta['domain']][msg_meta['document_subtype']].append(msg_meta['document_id'])
         return splitted_messages

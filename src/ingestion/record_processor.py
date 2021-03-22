@@ -5,12 +5,14 @@ from src.ingestion.transforms import (
     flatten_json,
     json_dump,
     add_type_to_form,
+    month_column
 )
 
 
 class Processor:
     pre_map_transformations = [  # Order Matters
         merge_location_information,
+        month_column,
         flatten_json,
         json_dump
     ]
@@ -61,6 +63,7 @@ class FormProcessor(Processor):
     pre_map_transformations = [  # Order Matters
         add_type_to_form,
         merge_location_information,
+        month_column,
         flatten_json,
         json_dump
     ]

@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from corehq.apps.es import users
 from corehq.apps.locations.models import SQLLocation
@@ -21,6 +22,18 @@ def flatten_json(data_dict, sep='__'):
 
 def add_type_to_form(data_dict):
     data_dict['type'] = data_dict['xmlns'].replace('http://openrosa.org/formdesigner/', '')
+    return data_dict
+
+def month_column(data_dict):
+    date_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+    if data_dict['doc_type'] == 'CommCareCase':
+        record_date = data_dict['opened_on']
+    else:
+        record_date = data_dict['form']['meta']['timeEnd']
+
+    data_dict['month'] = datetime.strptime(record_date, date_format).strftime('%Y-%m-1')
+
     return data_dict
 
 

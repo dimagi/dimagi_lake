@@ -13,13 +13,13 @@ Sudo code.
 7. Save the new offsets to HDFS.
 """
 import sys
-
+import os
 import yaml
 import request_handlers
 
 
 def load_application_config():
-    app_config = open("application_config.yaml")
+    app_config = open(f"{os.getenv('DIMAGI_LAKE_DIR')}/application_config.yaml")
     return yaml.load(app_config, Loader=yaml.FullLoader)
 
 
