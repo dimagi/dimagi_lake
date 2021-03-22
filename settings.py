@@ -70,6 +70,7 @@ ALLOWED_CASES = [
         "child_growth",
         "family",
         "maternal_care",
-        "member"
+        "member",
+        "commcare-case"
 ]
 

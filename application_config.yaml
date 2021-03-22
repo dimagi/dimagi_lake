@@ -1,0 +1,8 @@
+operations:
+  ingestion:
+    request_handler:
+      start_kafka_sink
+
+  aggregation:
+      request_handler:
+        aggregate_location

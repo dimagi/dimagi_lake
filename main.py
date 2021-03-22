@@ -13,20 +13,24 @@ Sudo code.
 7. Save the new offsets to HDFS.
 """
 import sys
-from src.kafka_sink import KafkaSink
-from src.spark_session_handler import SPARK
-from src.settings import (
-    KAFKA_BOOTSTRAP_SERVER_HOST,
-    KAFKA_BOOTSTRAP_SERVER_PORT
 
-)
+import yaml
+import request_handlers
 
-kafka_sink = KafkaSink(spark_session=SPARK,
-                       topic=sys.argv[1],
-                       partition=0,
-                       bootstrap_server=f"{KAFKA_BOOTSTRAP_SERVER_HOST}:{KAFKA_BOOTSTRAP_SERVER_PORT}"
-                       )
+
+def load_application_config():
+    app_config = open("application_config.yaml")
+    return yaml.load(app_config, Loader=yaml.FullLoader)
 
 
 if __name__ == '__main__':
-    kafka_sink.sink_kafka()
+    operation = sys.argv[1]
+    app_config = load_application_config()
+    if operation not in app_config['operations']:
+        valid_ops = ' | '.join(app_config['operations'].keys())
+        print(f"Invalid Operation for spark application. Valid operations are: {valid_ops}")
+
+    handler = app_config['operations'][operation]['request_handler']
+
+    request_handler = getattr(request_handlers, handler)
+    request_handler(sys.argv[1:])

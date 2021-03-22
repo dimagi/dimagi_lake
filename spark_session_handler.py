@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from src.settings import (
+from settings import (
     METASTORE_CONNECT_URI,
     METASTORE_USERNAME,
     METASTORE_PASSWORD,
