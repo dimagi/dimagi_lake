@@ -1,8 +1,7 @@
 import json
-from settings import (
+from datalake_conts import (
     HQ_DATA_PATH,
     KAFKA_CASE_TOPIC,
-    KAFKA_FORM_TOPIC,
     MAX_RECORDS_TO_PROCESS,
     CHECKPOINT_BASE_DIR,
     ALLOWED_FORMS,
@@ -15,15 +14,11 @@ from src.ingestion.datalake_writer import DatalakeWriter
 
 
 class KafkaSink:
-    spark_session = None
     topic = None
-    partition = 0
     bootstrap_server = None
 
-    def __init__(self, spark_session, topic, partition, bootstrap_server):
-        self.spark_session = spark_session
+    def __init__(self, topic, bootstrap_server):
         self.topic = topic
-        self.partition = partition
         self.bootstrap_server = bootstrap_server
         self.processor_cls = CaseProcessor if topic == KAFKA_CASE_TOPIC else FormProcessor
 

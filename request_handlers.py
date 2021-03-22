@@ -1,6 +1,5 @@
 from src.ingestion.kafka_sink import KafkaSink
-from src.spark_session_handler import SPARK
-from src.settings import (
+from datalake_conts import (
     KAFKA_BOOTSTRAP_SERVER_HOST,
     KAFKA_BOOTSTRAP_SERVER_PORT
 
