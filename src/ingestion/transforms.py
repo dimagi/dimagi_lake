@@ -67,6 +67,5 @@ def merge_location_information(record):
         for loc in ancestors:
             location_type = loc.location_type.name
             record[f"{location_type}_id"] = loc.location_id
-            record[f"{location_type}_name"] = loc.name
 
     return record

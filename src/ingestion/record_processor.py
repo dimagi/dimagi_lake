@@ -1,4 +1,5 @@
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.apps.locations.models import SQLLocation
 from spark_session_handler import SPARK
 from src.ingestion.transforms import (
     merge_location_information,
@@ -71,3 +72,35 @@ class FormProcessor(Processor):
 
     def pull_records(self):
         return [form.to_json() for form in self.accessor.get_forms(list(self.record_ids))]
+
+
+
+
+class LocationProcessor(Processor):
+    pre_map_transformations = [  # Order Matters
+        flatten_json,
+        json_dump
+    ]
+
+    def pull_records(self):
+        unique_loc_ids = set(self.record_ids)
+        flwcs = SQLLocation.object.filter(location_id__in=unique_loc_ids,
+                                          location_type__name='flw', # Could not find better way to find lowest level locations
+                                          is_archived=False)
+
+        records = list()
+
+        for flw in flwcs:
+            ancestors = flw.get_ancestors(include_self=True)
+            loc = dict()
+            loc['_id'] = flw.location_id
+            for ancestor in ancestors:
+                loc[f"{ancestor.location_type.name}_id"] = ancestor.location_id
+                loc[f"{ancestor.location_type.name}_name"] = ancestor.name
+                loc[f"{ancestor.location_type.name}_site_code"] = ancestor.site_code
+                loc[f"{ancestor.location_type.name}_latitude"] = ancestor.latitude
+                loc[f"{ancestor.location_type.name}_longitude"] = ancestor.longitude
+
+            records.append(loc)
+
+        return records

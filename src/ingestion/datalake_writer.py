@@ -14,7 +14,7 @@ class DatalakeWriter:
             self.write_new_table(table_name, data_df)
             DatalakeWriter.available_tables.append(table_name)
         else:
-            self.upsert_data(table_name, data_df)
+            self.upsert(table_name, data_df)
 
     def write_new_table(self, table_name, data_df):
         data_df.write.partitionBy('month', 'supervisor_id') \
@@ -24,10 +24,17 @@ class DatalakeWriter:
                          mode='overwrite',
                          path=self.data_url)
 
-    def upsert_data(self, table_name, data_df):
+    def upsert(self, table_name, data_df):
         data_df.createOrReplaceTempView(f"{table_name}_updates")
         SPARK.sql(self.__merge_query(existing_tablename=table_name,
                                      updates_tablename=f"{table_name}_updates"))
+
+    def delete(self, table_name, record_ids):
+        if table_name in DatalakeWriter.available_tables:
+            record_ids_param = ",'".join(record_ids)
+            SPARK.sql(f"DELETE from {table_name} where _id in ('{record_ids_param}')")
+        else:
+            print("TABLE DOES NOT EXISTS")
 
     def repartition(self):
         records = SPARK.read.format('delta').load(self.data_url)
@@ -35,7 +42,7 @@ class DatalakeWriter:
 
     def clear_older_versions(self, hours_old=0):
         delta_table = DeltaTable.forPath(SPARK, self.data_url)
-        delta_table.vacuum(0)
+        delta_table.vacuum(hours_old)
 
     def __merge_query(self, existing_tablename, updates_tablename):
         return f"""
