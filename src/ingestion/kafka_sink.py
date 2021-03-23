@@ -7,7 +7,8 @@ from datalake_conts import (
     CHECKPOINT_BASE_DIR,
     ALLOWED_FORMS,
     ALLOWED_CASES,
-    DATA_LAKE_DOMAIN
+    DATA_LAKE_DOMAIN,
+    KAFKA_LOCATION_TOPIC
 )
 from collections import defaultdict
 from src.ingestion.record_processor import FormProcessor, CaseProcessor, LocationProcessor
@@ -21,10 +22,8 @@ class BaseKafkaSink:
     bootstrap_server = None
     processor_cls = None
 
-    def __init__(self, topic, bootstrap_server):
-        self.topic = topic
+    def __init__(self, bootstrap_server):
         self.bootstrap_server = bootstrap_server
-        self.processor_cls = CaseProcessor if topic == KAFKA_CASE_TOPIC else FormProcessor
 
     def sink_kafka(self):
         kafka_messages = self.pull_messages_since_last_read()
@@ -83,7 +82,7 @@ class BaseKafkaSink:
 
 class CaseKafkaSink(BaseKafkaSink):
     processor_cls = CaseProcessor
-
+    topic = KAFKA_CASE_TOPIC
     def get_splitted_records(self, kafka_msgs_df):
         kafka_messages = kafka_msgs_df.select('value').collect()
 
@@ -103,6 +102,7 @@ class CaseKafkaSink(BaseKafkaSink):
 
 class FormKafkaSink(BaseKafkaSink):
     processor_cls = FormProcessor
+    topic = KAFKA_FORM_TOPIC
 
     def get_splitted_records(self, kafka_msgs_df):
         kafka_messages = kafka_msgs_df.select('value').collect()
@@ -124,6 +124,7 @@ class FormKafkaSink(BaseKafkaSink):
 
 class LocationKafkaSink(BaseKafkaSink):
     processor_cls = LocationProcessor
+    topic = KAFKA_LOCATION_TOPIC
 
     def get_splitted_records(self, kafka_msgs_df):
         kafka_messages = kafka_msgs_df.select('value').collect()
