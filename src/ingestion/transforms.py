@@ -4,6 +4,8 @@ from corehq.apps.es import users
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.json import CommCareJSONEncoder
 
+from src.ingestion.utils import trim_xmlns_id
+
 
 def flatten_json(data_dict, sep='__'):
     out = {}
@@ -21,8 +23,9 @@ def flatten_json(data_dict, sep='__'):
 
 
 def add_type_to_form(data_dict):
-    data_dict['type'] = data_dict['xmlns'].replace('http://openrosa.org/formdesigner/', '')
+    data_dict['type'] = trim_xmlns_id(data_dict['xmlns'])
     return data_dict
+
 
 def month_column(data_dict):
     date_format = "%Y-%m-%dT%H:%M:%S.%fZ"

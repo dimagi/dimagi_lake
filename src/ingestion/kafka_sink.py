@@ -2,6 +2,7 @@ import json
 from datalake_conts import (
     HQ_DATA_PATH,
     KAFKA_CASE_TOPIC,
+    KAFKA_FORM_TOPIC,
     MAX_RECORDS_TO_PROCESS,
     CHECKPOINT_BASE_DIR,
     ALLOWED_FORMS,
@@ -12,6 +13,8 @@ from collections import defaultdict
 from src.ingestion.record_processor import FormProcessor, CaseProcessor
 from src.ingestion.datalake_writer import DatalakeWriter
 from spark_session_handler import SPARK
+from src.ingestion.utils import trim_xmlns_id
+
 
 class KafkaSink:
     topic = None
@@ -40,8 +43,11 @@ class KafkaSink:
         total_records_processed = 0
         for domain, messages in splitted_messages.items():
             for doc_type, record_ids in messages.items():
-                data_url = f"{HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}"
-                table_name = f"{domain}_{self.topic}_{doc_type}".replace('-', '_').lower()
+                record_type = doc_type
+                if self.topic == KAFKA_FORM_TOPIC:
+                    record_type = trim_xmlns_id(doc_type)
+                data_url = f"{HQ_DATA_PATH}/{domain}/{self.topic}/{record_type}"
+                table_name = f"{domain}_{self.topic}_{record_type}".replace('-', '_').lower()
                 record_processor = self.processor_cls(domain, record_ids)
                 datalake_writer = DatalakeWriter(data_url)
 
