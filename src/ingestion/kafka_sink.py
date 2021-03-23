@@ -52,6 +52,8 @@ class KafkaSink:
                 datalake_writer = DatalakeWriter(data_url)
 
                 processed_records = record_processor.get_processed_records()
+
+                # TODO Write in parallel
                 datalake_writer.write_data(table_name, processed_records)
                 total_records_processed += len(record_ids)
         print("COMPLETED BATCH OF {} records".format(total_records_processed))
