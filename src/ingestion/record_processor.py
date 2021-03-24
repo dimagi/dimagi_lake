@@ -91,8 +91,7 @@ class LocationProcessor(Processor):
 
     def pull_records(self):
         unique_loc_ids = set(self.record_ids)
-        locations = SQLLocation.object.filter(location_id__in=unique_loc_ids,
-                                              is_archived=False)
+        locations = SQLLocation.object.filter(location_id__in=unique_loc_ids)
 
         records = set()
         for location in locations:

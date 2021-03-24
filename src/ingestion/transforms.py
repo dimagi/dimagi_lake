@@ -84,6 +84,7 @@ def prepare_location_hierarchy(loc_id):
         location_record[f"{loc.location_type.name}_site_code"] = loc.site_code
         location_record[f"{loc.location_type.name}_latitude"] = loc.latitude
         location_record[f"{loc.location_type.name}_longitude"] = loc.longitude
+        location_record[f"{loc.location_type.name}_is_archived"] = loc.is_archived
 
     location_record['_id'] = location.location_id
     return location_record
