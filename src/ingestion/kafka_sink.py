@@ -60,8 +60,10 @@ class BaseKafkaSink:
                 datalake_writer = DatalakeWriter(data_url)
 
                 processed_records = record_processor.get_processed_records()
-                datalake_writer.write_data(table_name, processed_records) # TODO Write in parallel
-                total_records_processed += len(record_ids)
+                if processed_records.count()>0:
+                    partition_columns = self.processor_cls.partition_columns
+                    datalake_writer.write_data(table_name, processed_records, partition_columns) # TODO Write in parallel
+                    total_records_processed += len(record_ids)
         print("COMPLETED BATCH OF {} records".format(total_records_processed))
 
     def pull_messages_since_last_read(self):

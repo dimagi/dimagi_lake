@@ -9,15 +9,15 @@ class DatalakeWriter:
         self.data_url = data_url
         SPARK.sql("SET spark.databricks.delta.schema.autoMerge.enabled = true")
 
-    def write_data(self, table_name, data_df):
+    def write_data(self, table_name, data_df, partition_columns):
         if table_name not in DatalakeWriter.available_tables:
-            self.write_new_table(table_name, data_df)
+            self.write_new_table(table_name, data_df, partition_columns)
             DatalakeWriter.available_tables.append(table_name)
         else:
             self.upsert(table_name, data_df)
 
-    def write_new_table(self, table_name, data_df):
-        data_df.write.partitionBy('month', 'supervisor_id') \
+    def write_new_table(self, table_name, data_df, partition_columns):
+        data_df.write.partitionBy(*partition_columns) \
             .option('overwriteSchema', True) \
             .saveAsTable(table_name,
                          format='delta',
@@ -48,7 +48,7 @@ class DatalakeWriter:
         return f"""
         MERGE INTO {existing_tablename} existing_records 
         USING {updates_tablename} updates 
-        ON existing_records.type = updates.type AND existing_records._id = updates._id 
+        ON existing_records._id = updates._id 
         WHEN MATCHED THEN UPDATE SET * 
         WHEN NOT MATCHED THEN INSERT *
         """

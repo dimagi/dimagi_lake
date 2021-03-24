@@ -5,6 +5,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.json import CommCareJSONEncoder
 
 from src.ingestion.utils import trim_xmlns_id
+from corehq.apps.locations.models import SQLLocation
 
 
 def flatten_json(data_dict, sep='__'):
@@ -69,3 +70,20 @@ def merge_location_information(record):
             record[f"{location_type}_id"] = loc.location_id
 
     return record
+
+
+def prepare_location_hierarchy(loc_id):
+    location = SQLLocation.by_location_id(loc_id)
+    location_hierarchy = location.get_ancestors(include_self=True)
+
+    location_record = dict()
+
+    for loc in location_hierarchy:
+        location_record[f"{loc.location_type.name}_id"] = loc.location_id
+        location_record[f"{loc.location_type.name}_name"] = loc.name
+        location_record[f"{loc.location_type.name}_site_code"] = loc.site_code
+        location_record[f"{loc.location_type.name}_latitude"] = loc.latitude
+        location_record[f"{loc.location_type.name}_longitude"] = loc.longitude
+
+    location_record['_id'] = location.location_id
+    return location_record
