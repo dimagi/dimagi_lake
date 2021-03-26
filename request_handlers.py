@@ -1,4 +1,5 @@
 from src.ingestion.kafka_sink import CaseKafkaSink, FormKafkaSink, LocationKafkaSink
+from src.aggregation.table_mapping import TABLE_MAPPING
 from datalake_conts import (
     KAFKA_BOOTSTRAP_SERVER_HOST,
     KAFKA_BOOTSTRAP_SERVER_PORT,
@@ -22,3 +23,11 @@ def start_kafka_sink(args):
     kafka_sink = kafka_sink_cls(bootstrap_server=bootstrap_server)
     kafka_sink.sink_kafka()
 
+
+def aggregate_table(args):
+    table = args[1]
+    domain = args[2]
+    month = args[3]
+
+    table_meta = TABLE_MAPPING[table](domain, month)
+    table_meta.aggregate()

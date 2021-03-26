@@ -4,5 +4,5 @@ operations:
       start_kafka_sink
 
   aggregation:
-      request_handler:
-        aggregate_location
+    request_handler:
+      aggregate_table

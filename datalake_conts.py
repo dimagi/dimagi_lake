@@ -19,6 +19,17 @@ METASTORE_PASSWORD = ''
 
 METASTORE_CONNECT_URI = f'jdbc:postgresql://{METASTORE_HOST}:{METASTORE_PORT}/{METASTORE_DB}?ceateDatabaseIfNotExist=true'
 
+DASHBOARD_DB_HOST = 'localhost'
+DASHBOARD_DB_PORT = '5432'
+DASHBOARD_DB_NAME = 'mh_warehouse'
+DASHBOARD_DB_USERNAME = 'commcarehq'
+DASHBOARD_DB_PASSWORD = 'commcarehq'
+DASHBOARD_JDBC_URL = f"jdbc:postgresql://{DASHBOARD_DB_HOST}:{DASHBOARD_DB_PORT}/{DASHBOARD_DB_NAME}"
+JDBC_PROPS = {
+                "user": DASHBOARD_DB_USERNAME,
+                "password": DASHBOARD_DB_PASSWORD,
+                "driver": "org.postgresql.Driver"
+            }
 
 # For HDFS
 # CHECKPOINT_BASE_DIR = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/kafka_offsets'
@@ -26,10 +37,12 @@ METASTORE_CONNECT_URI = f'jdbc:postgresql://{METASTORE_HOST}:{METASTORE_PORT}/{M
 
 # For Local File system
 # CHECKPOINT_BASE_DIR = f'file:///tmp/dimagi-lake/kafka_offsets'
-# HQ_DATA_PATH = f'file:///tmp/dimagi-lake/commcare'
+# HQ_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/location_raw.csv'
+# AGG_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/output/'
 
 CHECKPOINT_BASE_DIR = f's3a://dimagi-lake/kafka_offsets'
 HQ_DATA_PATH = f's3a://dimagi-lake/commcare'
+AGG_DATA_PATH = f's3a://dimagi-lake/aggregated'
 
 
 MAX_RECORDS_TO_PROCESS = 500
@@ -82,3 +95,6 @@ ALLOWED_CASES = [
         "commcare-case"
 ]
 
+
+# Aggregation constants
+FLWC_LOCATION_TABLE = 'flwc_location'
