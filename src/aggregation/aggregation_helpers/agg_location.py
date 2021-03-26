@@ -1,6 +1,6 @@
 from src.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
 from spark_session_handler import SPARK
-
+from src.aggregation.utils import clean_tablename
 
 class AggLocationHelper(BaseAggregationHelper):
 
@@ -38,18 +38,18 @@ class AggLocationHelper(BaseAggregationHelper):
             '{self.domain}' as domain
         FROM {self.database_name}.{self.source_tablename} as source_table
         WHERE (
-            state_is_archived=false AND 
-            district_is_archived=false AND 
-            project_is_archived=false AND 
-            supervisor_is_archived=false AND 
-            flwc_is_archived=false
+            state_is_archived is distinct from true AND
+            district_is_archived is distinct from true AND
+            project_is_archived is distinct from true AND
+            supervisor_is_archived is distinct from true AND
+            flwc_is_archived is distinct from true
         )
         """)
         return df
 
     def rollup_data(self, df, location_level):
 
-        tmp_tablename = f"{self.domain}_flwc_location_temp"
+        tmp_tablename = f"{clean_tablename(self.domain)}_flwc_location_temp"
         df.createOrReplaceTempView(tmp_tablename)
 
         columns_calculation = [
