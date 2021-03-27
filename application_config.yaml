@@ -6,3 +6,7 @@ operations:
   aggregation:
     request_handler:
       aggregate_table
+
+  migration:
+    request_handler:
+      migrate_db

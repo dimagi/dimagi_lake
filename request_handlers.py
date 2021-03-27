@@ -1,5 +1,6 @@
-from src.ingestion.kafka_sink import CaseKafkaSink, FormKafkaSink, LocationKafkaSink
 from src.aggregation.table_mapping import TABLE_MAPPING
+from src.ingestion.kafka_sink import CaseKafkaSink, FormKafkaSink, LocationKafkaSink
+from src.migration.domain_migration import migrate_domain_tables
 from datalake_conts import (
     KAFKA_BOOTSTRAP_SERVER_HOST,
     KAFKA_BOOTSTRAP_SERVER_PORT,
@@ -31,3 +32,8 @@ def aggregate_table(args):
 
     table_meta = TABLE_MAPPING[table](domain, month)
     table_meta.aggregate()
+
+
+def migrate_db(args):
+    domain_name = args[1]
+    migrate_domain_tables(domain_name)
