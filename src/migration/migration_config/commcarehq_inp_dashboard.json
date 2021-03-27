@@ -1,5 +1,9 @@
 [
   {
+    "table_name": "raw_location",
+    "data_path": "/inp-dashboard/location/Location/"
+  },
+  {
     "table_name": "adolescent_care_case",
     "data_path": "/inp-dashboard/case-sql/adolescent_care"
   },
