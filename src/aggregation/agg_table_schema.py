@@ -11,7 +11,7 @@ from src.aggregation.aggregation_helpers.agg_location import (
 )
 from src.aggregation.sql.sql_utils import connect_to_db, create_table, detach_partition, rename_table, attach_partition, drop_table
 from spark_session_handler import SPARK
-from src.utils import clean_name
+from src.utils import clean_name, get_db_name
 
 
 class BaseTable:
@@ -21,7 +21,7 @@ class BaseTable:
     def __init__(self, domain, month):
         self._domain = domain
         self._month = month
-        self._database_name = 'commcarehq'
+        self._database_name = get_db_name(domain)
         self.datalake_tablename = f"{clean_name(self._database_name)}.{clean_name(self._warehouse_base_table)}"
         self.datalake_tablepath = f'{AGG_DATA_PATH}/{self._domain}/{self._warehouse_base_table}'
 

@@ -1,6 +1,6 @@
 from datalake_conts import DIMAGI_LAKE_DIR
 from spark_session_handler import SPARK
-from src.utils import clean_name
+from src.utils import clean_name, get_db_name
 
 
 def drop_table_query(db_name, table_name):
@@ -38,6 +38,6 @@ def recreate_tables(db_name):
 
 
 def migrate_domain_tables(domain_name):
-    database_name = f"commcarehq_{clean_name(domain_name)}"
+    database_name = get_db_name(domain_name)
     create_db(database_name)
     recreate_tables(database_name)
