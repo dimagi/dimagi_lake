@@ -1,6 +1,6 @@
 from src.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
 from spark_session_handler import SPARK
-from src.aggregation.utils import clean_tablename
+from src.utils import clean_name
 
 class AggLocationHelper(BaseAggregationHelper):
 
@@ -49,7 +49,7 @@ class AggLocationHelper(BaseAggregationHelper):
 
     def rollup_data(self, df, location_level):
 
-        tmp_tablename = f"{clean_tablename(self.domain)}_flwc_location_temp"
+        tmp_tablename = f"{clean_name(self.domain)}_flwc_location_temp"
         df.createOrReplaceTempView(tmp_tablename)
 
         columns_calculation = [

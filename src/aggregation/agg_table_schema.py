@@ -11,7 +11,8 @@ from src.aggregation.aggregation_helpers.agg_location import (
 )
 from src.aggregation.sql.sql_utils import connect_to_db, create_table, detach_partition, rename_table, attach_partition, drop_table
 from spark_session_handler import SPARK
-from src.aggregation.utils import clean_tablename
+from src.utils import clean_name
+
 
 class BaseTable:
     _aggregator = None
@@ -21,7 +22,7 @@ class BaseTable:
         self._domain = domain
         self._month = month
         self._database_name = 'commcarehq'
-        self.datalake_tablename = f"{clean_tablename(self._database_name)}.{clean_tablename(self._warehouse_base_table)}"
+        self.datalake_tablename = f"{clean_name(self._database_name)}.{clean_name(self._warehouse_base_table)}"
         self.datalake_tablepath = f'{AGG_DATA_PATH}/{self._domain}/{self._warehouse_base_table}'
 
     def write_to_datalake(self, df):
@@ -69,7 +70,7 @@ class FlwcLocation(BaseTable):
 
     def write_to_warehouse(self,):
         df = SPARK.sql(f'select * from {self.datalake_tablename}')
-        child_table = f"{self._warehouse_base_table}_{clean_tablename(self._domain)}"
+        child_table = f"{self._warehouse_base_table}_{clean_name(self._domain)}"
         staging_table = f"{child_table}_stg"
         prev_table = f"{child_table}_prev"
         conn = connect_to_db()
