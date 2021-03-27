@@ -16,10 +16,11 @@ import sys
 import os
 import yaml
 import request_handlers
+from datalake_conts import DIMAGI_LAKE_DIR
 
 
 def load_application_config():
-    app_config = open(f"{os.getenv('DIMAGI_LAKE_DIR')}/application_config.yaml")
+    app_config = open(f"{DIMAGI_LAKE_DIR}/application_config.yaml")
     return yaml.load(app_config, Loader=yaml.FullLoader)
 
 

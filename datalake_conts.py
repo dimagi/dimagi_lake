@@ -1,3 +1,5 @@
+import os
+
 # KAFKA TOPICS
 KAFKA_CASE_TOPIC = 'case-sql'
 KAFKA_FORM_TOPIC = 'form-sql'
@@ -43,7 +45,7 @@ JDBC_PROPS = {
 CHECKPOINT_BASE_DIR = f's3a://dimagi-lake/kafka_offsets'
 HQ_DATA_PATH = f's3a://dimagi-lake/commcare'
 AGG_DATA_PATH = f's3a://dimagi-lake/aggregated'
-
+DIMAGI_LAKE_DIR = os.getenv('DIMAGI_LAKE_DIR')
 
 MAX_RECORDS_TO_PROCESS = 500
 DATA_LAKE_DOMAIN = ['inp-dashboard']
