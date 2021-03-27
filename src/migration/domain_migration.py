@@ -27,14 +27,16 @@ def recreate_tables(db_name):
             "create_table": create_table_query(db_name, migration_config['table_name'], migration_config['data_path'])
         }
 
-    migration_file = f"file:///{DIMAGI_LAKE_DIR}/src/migration/migration_config/{db_name}.json"
-    migration_config_df = SPARK.read.format('json').load(migration_file)
-    queries = migration_config_df.rdd.map(_get_migration_queries)
-
-    for query in queries:
+    def _run_migration_df2(query):
         SPARK.sql(query['drop_table'])
         SPARK.sql(query['create_table'])
         print(f"migrated table : {query['table_name']}")
+
+    migration_file = f"file:///{DIMAGI_LAKE_DIR}/src/migration/migration_config/{db_name}.csv"
+    migration_config_df = SPARK.read.format('csv').option('header', True).load(migration_file)
+    queries_rdd = migration_config_df.rdd.map(_get_migration_queries)
+
+    queries_rdd.foreach(_run_migration_df2)
 
 
 def migrate_domain_tables(domain_name):
