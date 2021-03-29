@@ -1,7 +1,9 @@
-from pyspark.sql.types import StringType, IntegerType, StructType, StructField
+from pyspark.sql.types import StringType, IntegerType, StructType, StructField, DateType
 
 from datalake_conts import (
     FLWC_LOCATION_TABLE,
+    CHILD_CARE_MONTHLY_TABLE,
+    SERVICE_ENROLLMENT_TABLE,
     AGG_DATA_PATH,
     DASHBOARD_JDBC_URL,
     JDBC_PROPS,
@@ -94,3 +96,53 @@ class FlwcLocation(BaseTable):
                     drop_table(cursor, prev_table)
         finally:
             conn.close()
+
+
+class ChildCareMonthly(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('flwc_id', StringType(), True),
+        StructField('supervisor_id', StringType(), True),
+        StructField('project_id', StringType(), True),
+        StructField('district_id', StringType(), True),
+        StructField('state_id', StringType(), True),
+        StructField('case_id', StringType(), True),
+        StructField('member_case_id', StringType(), True),
+        StructField('mother_member_case_id', StringType(), True),
+        StructField('name', StringType(), True),
+        StructField('dob', DateType(), True),
+        StructField('gender', StringType(), True),
+        StructField('opened_on', DateType(), True),
+        StructField('date_death', DateType(), True),
+        StructField('age_in_months', IntegerType(), True),
+        StructField('alive_in_month', IntegerType(), True),
+        StructField('is_migrated', IntegerType(), True),
+        StructField('want_nutrtion_services', IntegerType(), True),
+        StructField('want_growth_tracking_services', IntegerType(), True),
+        StructField('want_counselling_services', IntegerType(), True)
+    ])
+
+    _aggregator = AggLocationHelper
+    _warehouse_base_table = CHILD_CARE_MONTHLY_TABLE
+    _partition_columns = ('month',)
+
+
+class ServiceEnrollment(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('flwc_id', StringType(), True),
+        StructField('supervisor_id', StringType(), True),
+        StructField('project_id', StringType(), True),
+        StructField('district_id', StringType(), True),
+        StructField('state_id', StringType(), True),
+        StructField('member_case_id', StringType(), True),
+        StructField('want_nutrition_services', IntegerType(), True),
+        StructField('want_growth_tracking_services', IntegerType(), True),
+        StructField('want_counselling_services', IntegerType(), True)
+    ])
+
+    _aggregator = AggLocationHelper
+    _warehouse_base_table = SERVICE_ENROLLMENT_TABLE
+    _partition_columns = ('month',)
