@@ -8,9 +8,9 @@ from datalake_conts import (
     DASHBOARD_JDBC_URL,
     JDBC_PROPS,
 )
-from src.aggregation.aggregation_helpers.agg_location import (
-    AggLocationHelper
-)
+from src.aggregation.aggregation_helpers.agg_location import AggLocationHelper
+from src.aggregation.aggregation_helpers.agg_child_care_monthly import AggChildCareMonthly
+from src.aggregation.aggregation_helpers.agg_service_enrollment import AggServiceEnrollment
 from src.aggregation.sql.sql_utils import connect_to_db, create_table, detach_partition, rename_table, attach_partition, drop_table
 from spark_session_handler import SPARK
 from src.utils import clean_name, get_db_name
@@ -123,7 +123,7 @@ class ChildCareMonthly(BaseTable):
         StructField('want_counselling_services', IntegerType(), True)
     ])
 
-    _aggregator = AggLocationHelper
+    _aggregator = AggChildCareMonthly
     _warehouse_base_table = CHILD_CARE_MONTHLY_TABLE
     _partition_columns = ('month',)
 
@@ -143,6 +143,6 @@ class ServiceEnrollment(BaseTable):
         StructField('want_counselling_services', IntegerType(), True)
     ])
 
-    _aggregator = AggLocationHelper
+    _aggregator = AggServiceEnrollment
     _warehouse_base_table = SERVICE_ENROLLMENT_TABLE
     _partition_columns = ('month',)

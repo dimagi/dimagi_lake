@@ -4,7 +4,7 @@ from src.utils import clean_name
 from datalake_conts import SERVICE_ENROLLMENT_TABLE
 
 
-class AggChildCareMonthly(BaseAggregationHelper):
+class AggServiceEnrollment(BaseAggregationHelper):
 
     @property
     def source_tablename(self):
