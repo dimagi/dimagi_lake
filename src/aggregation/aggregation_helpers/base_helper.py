@@ -18,4 +18,14 @@ class BaseAggregationHelper:
         pass
 
     def enforce_schema(self, df):
-        return SPARK.createDataFrame(df.collect(), self.schema)
+        for column in self.schema:
+            df = df.withColumn(column.name, df[column.name].cast(column.dataType))
+
+        return df
+
+    def get_column(self, column_name):
+        return "__".join(self.columns[column_name])
+
+    @property
+    def columns(self):
+        return {}

@@ -100,3 +100,4 @@ ALLOWED_CASES = [
 
 # Aggregation constants
 FLWC_LOCATION_TABLE = 'flwc_location'
+FLWC_ADMINISTRATION_TABLE = 'flwc_administration'
