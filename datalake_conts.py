@@ -40,11 +40,11 @@ JDBC_PROPS = {
 # For Local File system
 # CHECKPOINT_BASE_DIR = f'file:///tmp/dimagi-lake/kafka_offsets'
 # HQ_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/location_raw.csv'
-# AGG_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/output/'
+AGG_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/output/'
 
 CHECKPOINT_BASE_DIR = f's3a://dimagi-lake/kafka_offsets'
 HQ_DATA_PATH = f's3a://dimagi-lake/commcare'
-AGG_DATA_PATH = f's3a://dimagi-lake/aggregated'
+# AGG_DATA_PATH = f's3a://dimagi-lake/aggregated'
 DIMAGI_LAKE_DIR = os.getenv('DIMAGI_LAKE_DIR')
 
 MAX_RECORDS_TO_PROCESS = 500
@@ -102,3 +102,6 @@ ALLOWED_CASES = [
 FLWC_LOCATION_TABLE = 'flwc_location'
 CHILD_CARE_MONTHLY_TABLE = 'child_care_monthly'
 SERVICE_ENROLLMENT_TABLE = 'service_enrollment_form'
+SUPPLEMENTARY_NUTRITION_FORM_TABLE = 'supplementary_nutrition_form'
+GROWTH_MONITORING_FORM_TABLE = 'growth_monitoring_form'
+CHILD_THR_FORM_TABLE = 'child_thr_form'
