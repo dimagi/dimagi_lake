@@ -1,6 +1,7 @@
-from consts import DIMAGI_LAKE_DIR, HQ_DATA_PATH
+import localsettings
 from spark_session_handler import SPARK
 from src.utils import get_db_name
+from pyspark import SparkFiles
 
 
 def drop_table_query(db_name, table_name):
@@ -22,7 +23,7 @@ def recreate_tables(db_name):
 
     def _get_migration_queries(migration_config):
         table_name = migration_config['table_name']
-        data_path = f"{HQ_DATA_PATH}{migration_config['data_path']}"
+        data_path = f"{localsettings.HQ_DATA_PATH}{migration_config['data_path']}"
         return {
             "table_name": table_name,
             "drop_table": drop_table_query(db_name, table_name),
@@ -34,8 +35,9 @@ def recreate_tables(db_name):
         SPARK.sql(query['create_table'])
         print(f"migrated table : {query['table_name']}")
 
-    migration_file = f"file:///{DIMAGI_LAKE_DIR}/src/migration/migration_config/{db_name}.csv"
-    migration_config_df = SPARK.read.format('csv').option('header', True).load(migration_file)
+    migration_file = SparkFiles.get(f'{db_name}.csv')
+    migration_file_uri = f"file://{migration_file}"
+    migration_config_df = SPARK.read.format('csv').option('header', True).load(migration_file_uri)
     queries_rdd = migration_config_df.rdd.map(_get_migration_queries)
 
     for query in queries_rdd.collect():
