@@ -1,5 +1,6 @@
-from spark_session_handler import SPARK
 from delta.tables import DeltaTable
+
+from spark_session_handler import SPARK
 
 
 class DatalakeWriter:

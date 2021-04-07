@@ -1,5 +1,6 @@
-from datetime import datetime
 import json
+from datetime import datetime
+
 from corehq.apps.es import users
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.json import CommCareJSONEncoder

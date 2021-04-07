@@ -1,20 +1,15 @@
 import psycopg2
-from datalake_conts import (
-DASHBOARD_DB_HOST,
-DASHBOARD_DB_PORT,
-DASHBOARD_DB_NAME,
-DASHBOARD_DB_USERNAME,
-DASHBOARD_DB_PASSWORD
-)
+import localsettings
+
 from dimagi_lake.aggregation.sql import sql_queries
 
 
 def connect_to_db():
-    return psycopg2.connect(database=DASHBOARD_DB_NAME,
-                            user=DASHBOARD_DB_USERNAME,
-                            password=DASHBOARD_DB_PASSWORD,
-                            host=DASHBOARD_DB_HOST,
-                            port=DASHBOARD_DB_PORT)
+    return psycopg2.connect(database=localsettings.DASHBOARD_DB_NAME,
+                            user=localsettings.DASHBOARD_DB_USERNAME,
+                            password=localsettings.DASHBOARD_DB_PASSWORD,
+                            host=localsettings.DASHBOARD_DB_HOST,
+                            port=localsettings.DASHBOARD_DB_PORT)
 
 
 def create_table(cur, base_table, table_name, domain):
@@ -23,7 +18,7 @@ def create_table(cur, base_table, table_name, domain):
 
 
 def detach_partition(cur, base_table, table_name):
-    query = sql_queries.dettach_partition_query(base_table, table_name)
+    query = sql_queries.detach_partition_query(base_table, table_name)
     cur.execute(query)
 
 
