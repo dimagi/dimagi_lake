@@ -1,6 +1,6 @@
 import localsettings
 from spark_session_handler import SPARK
-from src.utils import get_db_name
+from dimagi_lake.utils import get_db_name
 from pyspark import SparkFiles
 
 

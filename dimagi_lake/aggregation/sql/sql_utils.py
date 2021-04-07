@@ -1,6 +1,6 @@
 import psycopg2
 import localsettings
-from src.aggregation.sql import sql_queries
+from dimagi_lake.aggregation.sql import sql_queries
 
 
 def connect_to_db():

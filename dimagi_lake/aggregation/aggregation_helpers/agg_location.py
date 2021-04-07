@@ -1,7 +1,7 @@
-from src.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
 from spark_session_handler import SPARK
-from src.utils import clean_name
-from src.aggregation.utils import get_location_group_by_columns, get_location_column_rollup_calc
+from dimagi_lake.utils import clean_name
+from dimagi_lake.aggregation.utils import get_location_group_by_columns, get_location_column_rollup_calc
 
 
 class AggLocationHelper(BaseAggregationHelper):

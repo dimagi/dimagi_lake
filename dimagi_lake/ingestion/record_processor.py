@@ -1,7 +1,7 @@
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.apps.locations.models import SQLLocation
 from spark_session_handler import SPARK
-from src.ingestion.transforms import (
+from dimagi_lake.ingestion.transforms import (
     merge_location_information,
     flatten_json,
     json_dump,
