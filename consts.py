@@ -58,3 +58,4 @@ ORG_STRUCTURE = ['state', 'district', 'project', 'supervisor', 'flwc']
 # Aggregation constants
 # Following table names should match with the table name on dashboard db.
 FLWC_LOCATION_TABLE = 'flwc_location'
+FLWC_ADMINISTRATION_TABLE = 'flwc_administration'

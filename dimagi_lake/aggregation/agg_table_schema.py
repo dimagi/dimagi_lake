@@ -1,9 +1,12 @@
 from abc import ABC
 
-from pyspark.sql.types import IntegerType, StringType, StructField, StructType
+from pyspark.sql.types import (DateType, IntegerType, StringType, StructField,
+                               StructType)
 
 import localsettings
-from consts import FLWC_LOCATION_TABLE
+from consts import FLWC_ADMINISTRATION_TABLE, FLWC_LOCATION_TABLE
+from dimagi_lake.aggregation.aggregation_helpers.agg_flwc_administration import \
+    AggFlwcAdministartionHelper
 from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
 from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
@@ -112,3 +115,44 @@ class FlwcLocation(BaseTable):
                     drop_table(cursor, prev_table)
         finally:
             conn.close()
+
+
+class FlwcAdministration(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('flwc_id', StringType(), True),
+        StructField('supervisor_id', StringType(), True),
+        StructField('project_id', StringType(), True),
+        StructField('district_id', StringType(), True),
+        StructField('state_id', StringType(), True),
+        StructField('clean_drinking_water', IntegerType(), True),
+        StructField('functional_toilet', IntegerType(), True),
+        StructField('weighing_scale_infants', IntegerType(), True),
+        StructField('weighing_scale_mother_and_child', IntegerType(), True),
+        StructField('medicine_kit_available', IntegerType(), True),
+        StructField('infantometer_available', IntegerType(), True),
+        StructField('stadiometer_available', IntegerType(), True),
+    ])
+    _aggregator = AggFlwcAdministartionHelper
+    _warehouse_base_table = FLWC_ADMINISTRATION_TABLE
+    _partition_columns = ('month',)
+
+    def aggregate(self):
+        aggregator = self._aggregator(self._database_name,
+                                      self._domain,
+                                      self._month,
+                                      self.schema)
+        agg_df = aggregator.aggregate()
+        agg_df.show()
+        self.write_to_datalake(agg_df)
+
+    def write_to_datalake(self, df):
+        (df.write.partitionBy(*self._partition_columns)
+         .option('overwriteSchema', True)
+         .option("replaceWhere", f"month = '{self._month}'")
+         .mode("overwrite")
+         .saveAsTable(self.datalake_tablename,
+                      format='delta',
+                      mode='overwrite',
+                      path=self.datalake_tablepath))

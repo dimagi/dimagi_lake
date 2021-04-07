@@ -1,5 +1,7 @@
-from dimagi_lake.aggregation.agg_table_schema import FlwcLocation
+from dimagi_lake.aggregation.agg_table_schema import (FlwcAdministration,
+                                                      FlwcLocation)
 
 TABLE_MAPPING = {
-    'location': FlwcLocation
+    'location': FlwcLocation,
+    'infra': FlwcAdministration
 }
