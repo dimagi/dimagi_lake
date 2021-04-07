@@ -5,46 +5,8 @@ KAFKA_CASE_TOPIC = 'case-sql'
 KAFKA_FORM_TOPIC = 'form-sql'
 KAFKA_LOCATION_TOPIC = 'location'
 
-# KAFKA CREDS
-KAFKA_BOOTSTRAP_SERVER_HOST = 'localhost'
-KAFKA_BOOTSTRAP_SERVER_PORT = 9092
 
-# HIVE METASTORE
-METASTORE_HOST = 'localhost'
-METASTORE_PORT = 5432
-METASTORE_DB = 'metastore_db'
-METASTORE_USERNAME = ''
-METASTORE_PASSWORD = ''
-
-METASTORE_CONNECT_URI = f'jdbc:postgresql://{METASTORE_HOST}:{METASTORE_PORT}/{METASTORE_DB}?ceateDatabaseIfNotExist=true'
-
-DASHBOARD_DB_HOST = 'localhost'
-DASHBOARD_DB_PORT = '5432'
-DASHBOARD_DB_NAME = 'mh_warehouse'
-DASHBOARD_DB_USERNAME = 'commcarehq'
-DASHBOARD_DB_PASSWORD = 'commcarehq'
-DASHBOARD_JDBC_URL = f"jdbc:postgresql://{DASHBOARD_DB_HOST}:{DASHBOARD_DB_PORT}/{DASHBOARD_DB_NAME}"
-JDBC_PROPS = {
-    "user": DASHBOARD_DB_USERNAME,
-    "password": DASHBOARD_DB_PASSWORD,
-    "driver": "org.postgresql.Driver"
-}
-
-# For HDFS
-# CHECKPOINT_BASE_DIR = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/kafka_offsets'
-# HQ_DATA_PATH = f'hdfs://{HADOOP_SERVER_HOST}:{HADOOP_SERVER_PORT}/commcare'
-
-# For Local File system
-# CHECKPOINT_BASE_DIR = f'file:///tmp/dimagi-lake/kafka_offsets'
-# HQ_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/location_raw.csv'
-# AGG_DATA_PATH = f'file:///Users/dsi/projects/dimagi_lake/src/aggregation/test/output/'
-
-CHECKPOINT_BASE_DIR = f's3a://dimagi-lake/kafka_offsets'
-HQ_DATA_PATH = f's3a://dimagi-lake/commcare'
-AGG_DATA_PATH = f's3a://dimagi-lake/aggregated'
-DIMAGI_LAKE_DIR = os.getenv('DIMAGI_LAKE_DIR')
-
-MAX_RECORDS_TO_PROCESS = 500
+MAX_RECORDS_TO_PROCESS = 50000
 DATA_LAKE_DOMAIN = ['inp-dashboard']
 
 # TODO Split the different forms and cases types to be processed by separate process instances
@@ -93,6 +55,7 @@ ALLOWED_CASES = [
 ]
 
 ORG_STRUCTURE = ['state', 'district', 'project', 'supervisor', 'flwc']
+
 # Aggregation constants
 # Following table names should match with the table name on dashboard db.
 FLWC_LOCATION_TABLE = 'flwc_location'

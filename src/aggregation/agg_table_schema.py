@@ -2,12 +2,9 @@ from abc import ABC
 
 from pyspark.sql.types import StringType, IntegerType, StructType, StructField
 
-from consts import (
-    FLWC_LOCATION_TABLE,
-    AGG_DATA_PATH,
-    DASHBOARD_JDBC_URL,
-    JDBC_PROPS,
-)
+from consts import FLWC_LOCATION_TABLE
+import localsettings
+
 from src.aggregation.aggregation_helpers.agg_location import (
     AggLocationHelper
 )
@@ -32,7 +29,7 @@ class BaseTable(ABC):
         self._month = month
         self._database_name = get_db_name(domain)
         self.datalake_tablename = f"{clean_name(self._database_name)}.{clean_name(self._warehouse_base_table)}"
-        self.datalake_tablepath = f'{AGG_DATA_PATH}/{self._domain}/{self._warehouse_base_table}'
+        self.datalake_tablepath = f'{localsettings.AGG_DATA_PATH}/{self._domain}/{self._warehouse_base_table}'
 
     def write_to_datalake(self, df):
         """
@@ -100,7 +97,10 @@ class FlwcLocation(BaseTable):
                     drop_table(cursor, prev_table)
                     create_table(cursor, self._warehouse_base_table, staging_table, self._domain)
 
-            df.write.jdbc(url=DASHBOARD_JDBC_URL, table=staging_table, mode='append', properties=JDBC_PROPS)
+            df.write.jdbc(url=localsettings.DASHBOARD_JDBC_URL,
+                          table=staging_table,
+                          mode='append',
+                          properties=localsettings.JDBC_PROPS)
 
             with conn:
                 with conn.cursor() as cursor:  # Do all following operations in a single transaction
