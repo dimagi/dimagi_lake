@@ -8,10 +8,12 @@ def create_domain_table_query(parent_table, table_name, domain):
     )
     """
 
+
 def drop_table_query(table_name):
     return f"DROP TABLE IF EXISTS {table_name}"
 
-def dettach_partition_query(parent_table, partition_table):
+
+def detach_partition_query(parent_table, partition_table):
     return f"""
     ALTER TABLE IF EXISTS "{partition_table}" NO INHERIT "{parent_table}"
     """

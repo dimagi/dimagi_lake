@@ -16,7 +16,7 @@ import sys
 import os
 import yaml
 import request_handlers
-from datalake_conts import DIMAGI_LAKE_DIR
+from consts import DIMAGI_LAKE_DIR
 
 
 def load_application_config():

@@ -1,5 +1,5 @@
 import json
-from datalake_conts import (
+from consts import (
     HQ_DATA_PATH,
     KAFKA_CASE_TOPIC,
     KAFKA_FORM_TOPIC,

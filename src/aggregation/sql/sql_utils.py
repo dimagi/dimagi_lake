@@ -1,5 +1,5 @@
 import psycopg2
-from datalake_conts import (
+from consts import (
 DASHBOARD_DB_HOST,
 DASHBOARD_DB_PORT,
 DASHBOARD_DB_NAME,
@@ -23,7 +23,7 @@ def create_table(cur, base_table, table_name, domain):
 
 
 def detach_partition(cur, base_table, table_name):
-    query = sql_queries.dettach_partition_query(base_table, table_name)
+    query = sql_queries.detach_partition_query(base_table, table_name)
     cur.execute(query)
 
 

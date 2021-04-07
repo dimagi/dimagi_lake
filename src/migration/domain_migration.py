@@ -1,4 +1,4 @@
-from datalake_conts import DIMAGI_LAKE_DIR, HQ_DATA_PATH
+from consts import DIMAGI_LAKE_DIR, HQ_DATA_PATH
 from spark_session_handler import SPARK
 from src.utils import get_db_name
 
