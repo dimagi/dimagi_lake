@@ -7,11 +7,11 @@ from datalake_conts import (
     DASHBOARD_JDBC_URL,
     JDBC_PROPS,
 )
-from src.aggregation.aggregation_helpers.agg_location import AggLocationHelper
-from src.aggregation.aggregation_helpers.agg_flwc_administration import AggFlwcAdministartionHelper
-from src.aggregation.sql.sql_utils import connect_to_db, create_table, detach_partition, rename_table, attach_partition, drop_table
+from dimagi_lake.aggregation.aggregation_helpers.agg_location import AggLocationHelper
+from dimagi_lake.aggregation.aggregation_helpers.agg_flwc_administration import AggFlwcAdministartionHelper
+from dimagi_lake.aggregation.sql.sql_utils import connect_to_db, create_table, detach_partition, rename_table, attach_partition, drop_table
 from spark_session_handler import SPARK
-from src.utils import clean_name, get_db_name
+from dimagi_lake.utils import clean_name, get_db_name
 
 
 class BaseTable:

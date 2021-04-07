@@ -4,7 +4,7 @@ from corehq.apps.es import users
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.json import CommCareJSONEncoder
 
-from src.ingestion.utils import trim_xmlns_id
+from dimagi_lake.ingestion.utils import trim_xmlns_id
 
 
 def flatten_json(data_dict, sep='__'):

@@ -1,6 +1,6 @@
 from datalake_conts import DIMAGI_LAKE_DIR, HQ_DATA_PATH
 from spark_session_handler import SPARK
-from src.utils import get_db_name
+from dimagi_lake.utils import get_db_name
 
 
 def drop_table_query(db_name, table_name):

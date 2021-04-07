@@ -11,10 +11,10 @@ from datalake_conts import (
     KAFKA_LOCATION_TOPIC
 )
 from collections import defaultdict
-from src.ingestion.record_processor import FormProcessor, CaseProcessor, LocationProcessor
-from src.ingestion.datalake_writer import DatalakeWriter
+from dimagi_lake.ingestion.record_processor import FormProcessor, CaseProcessor, LocationProcessor
+from dimagi_lake.ingestion.datalake_writer import DatalakeWriter
 from spark_session_handler import SPARK
-from src.ingestion.utils import trim_xmlns_id
+from dimagi_lake.ingestion.utils import trim_xmlns_id
 
 
 class BaseKafkaSink:

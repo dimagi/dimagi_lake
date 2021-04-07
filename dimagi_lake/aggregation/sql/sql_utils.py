@@ -6,7 +6,7 @@ DASHBOARD_DB_NAME,
 DASHBOARD_DB_USERNAME,
 DASHBOARD_DB_PASSWORD
 )
-from src.aggregation.sql import sql_queries
+from dimagi_lake.aggregation.sql import sql_queries
 
 
 def connect_to_db():
