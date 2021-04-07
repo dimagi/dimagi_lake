@@ -1,12 +1,14 @@
 from abc import ABC
 
-from pyspark.sql.types import IntegerType, StringType, StructField, StructType, DateType
+from pyspark.sql.types import (DateType, IntegerType, StringType, StructField,
+                               StructType)
 
 import localsettings
-from consts import FLWC_LOCATION_TABLE, FLWC_ADMINISTRATION_TABLE
+from consts import FLWC_ADMINISTRATION_TABLE, FLWC_LOCATION_TABLE
+from dimagi_lake.aggregation.aggregation_helpers.agg_flwc_administration import \
+    AggFlwcAdministartionHelper
 from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
-from dimagi_lake.aggregation.aggregation_helpers.agg_flwc_administration import AggFlwcAdministartionHelper
 from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
                                                    connect_to_db, create_table,
                                                    detach_partition,

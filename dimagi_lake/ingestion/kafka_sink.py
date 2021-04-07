@@ -1,5 +1,6 @@
 import json
 from collections import defaultdict
+
 import localsettings
 from consts import (ALLOWED_CASES, ALLOWED_FORMS, DATA_LAKE_DOMAIN,
                     KAFKA_CASE_TOPIC, KAFKA_FORM_TOPIC, KAFKA_LOCATION_TOPIC,

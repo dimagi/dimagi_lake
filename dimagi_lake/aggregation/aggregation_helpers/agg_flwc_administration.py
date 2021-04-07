@@ -1,7 +1,10 @@
 from datetime import datetime
-from dimagi_lake.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
-from spark_session_handler import SPARK
+
+from dimagi_lake.aggregation.aggregation_helpers.base_helper import \
+    BaseAggregationHelper
 from dimagi_lake.utils import clean_name
+from spark_session_handler import SPARK
+
 
 class AggFlwcAdministartionHelper(BaseAggregationHelper):
 
