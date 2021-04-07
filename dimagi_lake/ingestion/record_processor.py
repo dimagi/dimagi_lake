@@ -1,14 +1,13 @@
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.interfaces.dbaccessors import (CaseAccessors,
+                                                          FormAccessors)
+
+from dimagi_lake.ingestion.transforms import (add_type_to_form, flatten_json,
+                                              json_dump,
+                                              merge_location_information,
+                                              month_column,
+                                              prepare_location_hierarchy)
 from spark_session_handler import SPARK
-from dimagi_lake.ingestion.transforms import (
-    merge_location_information,
-    flatten_json,
-    json_dump,
-    add_type_to_form,
-    month_column,
-    prepare_location_hierarchy
-)
 
 
 class Processor:

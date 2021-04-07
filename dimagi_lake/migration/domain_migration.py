@@ -1,7 +1,8 @@
-import localsettings
-from spark_session_handler import SPARK
-from dimagi_lake.utils import get_db_name
 from pyspark import SparkFiles
+
+import localsettings
+from dimagi_lake.utils import get_db_name
+from spark_session_handler import SPARK
 
 
 def drop_table_query(db_name, table_name):

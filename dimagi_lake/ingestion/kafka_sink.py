@@ -1,19 +1,16 @@
 import json
-from consts import (
-    KAFKA_CASE_TOPIC,
-    KAFKA_FORM_TOPIC,
-    MAX_RECORDS_TO_PROCESS,
-    ALLOWED_FORMS,
-    ALLOWED_CASES,
-    DATA_LAKE_DOMAIN,
-    KAFKA_LOCATION_TOPIC
-)
-import localsettings
 from collections import defaultdict
-from dimagi_lake.ingestion.record_processor import FormProcessor, CaseProcessor, LocationProcessor
+
+import localsettings
+from consts import (ALLOWED_CASES, ALLOWED_FORMS, DATA_LAKE_DOMAIN,
+                    KAFKA_CASE_TOPIC, KAFKA_FORM_TOPIC, KAFKA_LOCATION_TOPIC,
+                    MAX_RECORDS_TO_PROCESS)
 from dimagi_lake.ingestion.datalake_writer import DatalakeWriter
-from spark_session_handler import SPARK
+from dimagi_lake.ingestion.record_processor import (CaseProcessor,
+                                                    FormProcessor,
+                                                    LocationProcessor)
 from dimagi_lake.ingestion.utils import trim_xmlns_id
+from spark_session_handler import SPARK
 
 
 class BaseKafkaSink:

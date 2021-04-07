@@ -1,16 +1,17 @@
 from abc import ABC
 
-from pyspark.sql.types import StringType, IntegerType, StructType, StructField
+from pyspark.sql.types import IntegerType, StringType, StructField, StructType
 
-from consts import FLWC_LOCATION_TABLE
 import localsettings
-
-from dimagi_lake.aggregation.aggregation_helpers.agg_location import (
+from consts import FLWC_LOCATION_TABLE
+from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
-)
-from dimagi_lake.aggregation.sql.sql_utils import connect_to_db, create_table, detach_partition, rename_table, attach_partition, drop_table
-from spark_session_handler import SPARK
+from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
+                                                   connect_to_db, create_table,
+                                                   detach_partition,
+                                                   drop_table, rename_table)
 from dimagi_lake.utils import clean_name, get_db_name
+from spark_session_handler import SPARK
 
 
 class BaseTable(ABC):

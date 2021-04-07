@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
-import localsettings
 
+import localsettings
 
 SPARK = (SparkSession.builder
          .appName('my_awesome')

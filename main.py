@@ -13,9 +13,11 @@ Sudo code.
 7. Save the new offsets to HDFS.
 """
 import sys
+
 import yaml
-import request_handlers
 from pyspark import SparkFiles
+
+import request_handlers
 
 
 def load_application_config():

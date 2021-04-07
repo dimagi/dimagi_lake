@@ -1,4 +1,3 @@
-import os
 
 # KAFKA TOPICS
 KAFKA_CASE_TOPIC = 'case-sql'

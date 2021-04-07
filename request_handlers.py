@@ -1,16 +1,10 @@
+from consts import KAFKA_CASE_TOPIC, KAFKA_FORM_TOPIC, KAFKA_LOCATION_TOPIC
 from dimagi_lake.aggregation.table_mapping import TABLE_MAPPING
-from dimagi_lake.ingestion.kafka_sink import CaseKafkaSink, FormKafkaSink, LocationKafkaSink
+from dimagi_lake.ingestion.kafka_sink import (CaseKafkaSink, FormKafkaSink,
+                                              LocationKafkaSink)
 from dimagi_lake.migration.domain_migration import migrate_domain_tables
-from consts import (
-    KAFKA_FORM_TOPIC,
-    KAFKA_CASE_TOPIC,
-    KAFKA_LOCATION_TOPIC
-
-)
-from localsettings import (
-    KAFKA_BOOTSTRAP_SERVER_PORT,
-    KAFKA_BOOTSTRAP_SERVER_HOST
-)
+from localsettings import (KAFKA_BOOTSTRAP_SERVER_HOST,
+                           KAFKA_BOOTSTRAP_SERVER_PORT)
 
 
 def start_kafka_sink(args):

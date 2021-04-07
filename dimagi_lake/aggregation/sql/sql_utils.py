@@ -1,4 +1,5 @@
 import psycopg2
+
 import localsettings
 from dimagi_lake.aggregation.sql import sql_queries
 

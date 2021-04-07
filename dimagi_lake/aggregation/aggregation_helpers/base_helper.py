@@ -1,4 +1,5 @@
 from abc import ABC
+
 from spark_session_handler import SPARK
 
 
