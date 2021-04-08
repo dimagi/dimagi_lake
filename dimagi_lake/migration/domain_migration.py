@@ -1,6 +1,6 @@
 from pyspark import SparkFiles
 
-import localsettings
+import env_settings
 from dimagi_lake.utils import get_db_name
 from spark_session_handler import SPARK
 
@@ -24,7 +24,7 @@ def recreate_tables(db_name):
 
     def _get_migration_queries(migration_config):
         table_name = migration_config['table_name']
-        data_path = f"{localsettings.HQ_DATA_PATH}{migration_config['data_path']}"
+        data_path = f"{env_settings.HQ_DATA_PATH}{migration_config['data_path']}"
         return {
             "table_name": table_name,
             "drop_table": drop_table_query(db_name, table_name),

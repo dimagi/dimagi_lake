@@ -1,15 +1,15 @@
 import psycopg2
 
-import localsettings
+import env_settings
 from dimagi_lake.aggregation.sql import sql_queries
 
 
 def connect_to_db():
-    return psycopg2.connect(database=localsettings.DASHBOARD_DB_NAME,
-                            user=localsettings.DASHBOARD_DB_USERNAME,
-                            password=localsettings.DASHBOARD_DB_PASSWORD,
-                            host=localsettings.DASHBOARD_DB_HOST,
-                            port=localsettings.DASHBOARD_DB_PORT)
+    return psycopg2.connect(database=env_settings.DASHBOARD_DB_NAME,
+                            user=env_settings.DASHBOARD_DB_USERNAME,
+                            password=env_settings.DASHBOARD_DB_PASSWORD,
+                            host=env_settings.DASHBOARD_DB_HOST,
+                            port=env_settings.DASHBOARD_DB_PORT)
 
 
 def create_table(cur, base_table, table_name, domain):

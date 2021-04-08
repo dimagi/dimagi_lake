@@ -3,7 +3,7 @@ from dimagi_lake.aggregation.table_mapping import TABLE_MAPPING
 from dimagi_lake.ingestion.kafka_sink import (CaseKafkaSink, FormKafkaSink,
                                               LocationKafkaSink)
 from dimagi_lake.migration.domain_migration import migrate_domain_tables
-from localsettings import (KAFKA_BOOTSTRAP_SERVER_HOST,
+from env_settings import (KAFKA_BOOTSTRAP_SERVER_HOST,
                            KAFKA_BOOTSTRAP_SERVER_PORT)
 
 
