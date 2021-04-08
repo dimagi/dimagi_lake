@@ -1,4 +1,4 @@
-from consts import FLWC_LOCATION_TABLE, SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE
+from consts import FLWC_LOCATION_TABLE, SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE, SUPPLEMENTARY_NUTRITION_FORM_TABLE, CHILD_THR_FORM_TABLE
 from dimagi_lake.aggregation.aggregation_helpers.base_helper import \
     BaseAggregationHelper
 from spark_session_handler import SPARK
@@ -25,6 +25,14 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
     @property
     def gm_table(self):
         return f"{self.database_name}.{CHILD_WEIGHT_HEIGHT_FORM_TABLE}"
+
+    @property
+    def snd_table(self):
+        return f"{self.database_name}.{SUPPLEMENTARY_NUTRITION_FORM_TABLE}"
+
+    @property
+    def thr_table(self):
+        return f"{self.database_name}.{CHILD_THR_FORM_TABLE}"
 
     def aggregate(self):
         df = self.preprocess()
@@ -67,7 +75,8 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
                                      f"OR service_enrollment.registered_on>='{self.month}')")
         born_in_month = (f"date_trunc('MONTH',case_json__member_dob)='{self.month}'")
         gm_eligible = f"({age_in_months}<=60) AND {want_growth_tracking_services}"
-
+        pse_eligible = f"({age_in_months}>36 AND {age_in_months}<=72) AND {want_nutrition_services}"
+        thr_eligible = f"({age_in_months}>6 AND {age_in_months}<=36) AND {want_nutrition_services}"
 
         df.createOrReplaceTempView("child_cases")
 
@@ -129,7 +138,19 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
             CASE
                 WHEN {gm_eligible} AND date_trunc('MONTH', gm.last_zscore_grading_wfa_recorded_date) = '{self.month}' THEN gm.zscore_grading_wfa 
                 ELSE NULL 
-            END as zscore_grading_wfa
+            END as zscore_grading_wfa,
+            CASE
+                WHEN {pse_eligible} THEN COALESCE(snd.total_pse_attended, 0)
+                ELSE 0
+            END as days_pse_attended,
+            CASE
+                WHEN {pse_eligible} THEN COALESCE(snd.total_snd_given, 0)
+                ELSE 0
+            END as days_snd_given,
+            CASE
+                WHEN {thr_eligible} THEN COALESCE(thr.days_thr_given, 0)
+                ELSE 0
+            END AS days_thr_given
         from child_cases
         left join {self.member_case_table} member_case ON (
             child_cases.member_case_id = member_case.case_id
@@ -145,5 +166,13 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
         left join {self.gm_table} as gm ON (
             child_cases.case_id = gm.child_case_id AND
             gm.month = '{self.month}'
+        )
+        left join {self.snd_table} as snd ON (
+            child_cases.case_id = snd.child_case_id AND
+            snd.month = '{self.month}'
+        )
+        left join {self.thr_table} as thr ON (
+            child_cases.case_id = thr.child_case_id AND
+            thr.month = '{self.month}'
         )
         """)
