@@ -4,7 +4,7 @@ from dimagi_lake.ingestion.kafka_sink import (CaseKafkaSink, FormKafkaSink,
                                               LocationKafkaSink)
 from dimagi_lake.migration.domain_migration import migrate_domain_tables
 from env_settings import (KAFKA_BOOTSTRAP_SERVER_HOST,
-                           KAFKA_BOOTSTRAP_SERVER_PORT)
+                          KAFKA_BOOTSTRAP_SERVER_PORT)
 
 
 def start_kafka_sink(args):

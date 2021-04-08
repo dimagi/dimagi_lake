@@ -1,11 +1,11 @@
 table_name,data_path
 raw_location,/inp-dashboard/location/Location/
 adolescent_care_case,/inp-dashboard/case-sql/adolescent_care
-child_care_case,/inp-dashboard/case-sql/child_care
+raw_child_care_case,/inp-dashboard/case-sql/child_care
 child_growth_case,/inp-dashboard/case-sql/child_growth
 family_case,/inp-dashboard/case-sql/family
 maternal_care_case,/inp-dashboard/case-sql/maternal_care
-member_case,/inp-dashboard/case-sql/member
+raw_member_case,/inp-dashboard/case-sql/member
 woman_care_case,/inp-dashboard/case-sql/woman_care
 gd_pw_lw,/inp-dashboard/form-sql/FC61CD97-2F3D-4299-B5FF-485B436AD1B1
 pc_mw,/inp-dashboard/form-sql/FB4D9AE6-4BB5-4589-BF4F-8259CF439636
@@ -27,7 +27,7 @@ gd_child_0y_5y_w_h,/inp-dashboard/form-sql/6595DEFD-60DA-4102-A704-F400D40F5F05
 snd_mw,/inp-dashboard/form-sql/5C97F80A-439D-45A1-AFDD-E46395A274F0
 snd_pw_lw,/inp-dashboard/form-sql/4FAB81D4-BBAF-424E-8DB1-96478791DB01
 pc_child_3y_5y,/inp-dashboard/form-sql/3869F531-5D2C-4993-B01D-5EB94DE53BA3
-service_enrollment,/inp-dashboard/form-sql/33EBE6E1-28FE-4F59-89D0-200E66ECA6F5
+raw_service_enrollment_form,/inp-dashboard/form-sql/33EBE6E1-28FE-4F59-89D0-200E66ECA6F5
 snd_child_6m_3y,/inp-dashboard/form-sql/116A78AD-E839-4BD4-BA13-A534A4A85B3B
 gd_adol_ben,/inp-dashboard/form-sql/109A04AF-409E-48B9-A2B0-C52B4CE72D91
 mem_mgt_edit_remove_member,/inp-dashboard/form-sql/09B1E7B3-BB57-4A51-8CD3-114F1054F18E
