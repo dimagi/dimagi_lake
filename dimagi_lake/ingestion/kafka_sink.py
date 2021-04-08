@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 
-import localsettings
+import env_settings
 from consts import (ALLOWED_CASES, ALLOWED_FORMS, DATA_LAKE_DOMAIN,
                     KAFKA_CASE_TOPIC, KAFKA_FORM_TOPIC, KAFKA_LOCATION_TOPIC,
                     MAX_RECORDS_TO_PROCESS)
@@ -26,7 +26,7 @@ class BaseKafkaSink:
 
         query = (kafka_messages.writeStream
                  .foreachBatch(self.process_batch)
-                 .option("checkpointLocation", f"{localsettings.CHECKPOINT_BASE_DIR}/{self.topic}")
+                 .option("checkpointLocation", f"{env_settings.CHECKPOINT_BASE_DIR}/{self.topic}")
                  .start())
         query.awaitTermination()
 
@@ -41,7 +41,7 @@ class BaseKafkaSink:
     def delete_records(self, records_to_delete):
         for domain, messages in records_to_delete.items():
             for doc_type, record_ids in messages.items():
-                data_url = f"{localsettings.HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}"
+                data_url = f"{env_settings.HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}"
                 table_name = f"{domain}_{self.topic}_{doc_type}".replace('-', '_').lower()
                 datalake_writer = DatalakeWriter(data_url)
                 datalake_writer.delete(table_name, record_ids)
@@ -50,7 +50,7 @@ class BaseKafkaSink:
         total_records_processed = 0
         for domain, messages in records_to_upsert.items():
             for doc_type, record_ids in messages.items():
-                data_url = f"{localsettings.HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}"
+                data_url = f"{env_settings.HQ_DATA_PATH}/{domain}/{self.topic}/{doc_type}"
                 table_name = f"{domain}_{self.topic}_{doc_type}".replace('-', '_').lower()
                 record_processor = self.processor_cls(domain, record_ids)
                 datalake_writer = DatalakeWriter(data_url)
