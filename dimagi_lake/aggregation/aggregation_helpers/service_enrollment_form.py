@@ -1,7 +1,9 @@
-from dimagi_lake.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
-from spark_session_handler import SPARK
-from consts import SERVICE_ENROLLMENT_TABLE
 import datetime
+
+from consts import SERVICE_ENROLLMENT_TABLE
+from dimagi_lake.aggregation.aggregation_helpers.base_helper import \
+    BaseAggregationHelper
+from spark_session_handler import SPARK
 
 
 class ServiceEnrollmentAggregationHelper(BaseAggregationHelper):

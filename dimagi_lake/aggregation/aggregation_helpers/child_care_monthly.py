@@ -1,6 +1,7 @@
-from dimagi_lake.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
+from consts import FLWC_LOCATION_TABLE, SERVICE_ENROLLMENT_TABLE
+from dimagi_lake.aggregation.aggregation_helpers.base_helper import \
+    BaseAggregationHelper
 from spark_session_handler import SPARK
-from consts import SERVICE_ENROLLMENT_TABLE, FLWC_LOCATION_TABLE
 
 
 class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):

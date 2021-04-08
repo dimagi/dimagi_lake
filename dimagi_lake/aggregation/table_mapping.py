@@ -1,9 +1,6 @@
-from dimagi_lake.aggregation.agg_table_schema import (
-    FlwcLocation,
-    ChildCareMonthly,
-    ServiceEnrollment,
-)
-
+from dimagi_lake.aggregation.agg_table_schema import (ChildCareMonthly,
+                                                      FlwcLocation,
+                                                      ServiceEnrollment)
 
 TABLE_MAPPING = {
     'location': FlwcLocation,

@@ -1,13 +1,17 @@
 from abc import ABC
 
-from pyspark.sql.types import IntegerType, StringType, StructField, StructType, DateType, DoubleType
+from pyspark.sql.types import (DateType, DoubleType, IntegerType, StringType,
+                               StructField, StructType)
 
 import localsettings
-from consts import FLWC_LOCATION_TABLE, CHILD_CARE_MONTHLY_TABLE, SERVICE_ENROLLMENT_TABLE
+from consts import (CHILD_CARE_MONTHLY_TABLE, FLWC_LOCATION_TABLE,
+                    SERVICE_ENROLLMENT_TABLE)
 from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
-from dimagi_lake.aggregation.aggregation_helpers.child_care_monthly import ChildCareMonthlyAggregationHelper
-from dimagi_lake.aggregation.aggregation_helpers.service_enrollment_form import ServiceEnrollmentAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.child_care_monthly import \
+    ChildCareMonthlyAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.service_enrollment_form import \
+    ServiceEnrollmentAggregationHelper
 from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
                                                    connect_to_db, create_table,
                                                    detach_partition,
