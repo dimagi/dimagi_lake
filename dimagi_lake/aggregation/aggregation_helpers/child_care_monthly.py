@@ -1,4 +1,4 @@
-from consts import FLWC_LOCATION_TABLE, SERVICE_ENROLLMENT_TABLE
+from consts import FLWC_LOCATION_TABLE, SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE
 from dimagi_lake.aggregation.aggregation_helpers.base_helper import \
     BaseAggregationHelper
 from spark_session_handler import SPARK
@@ -21,6 +21,10 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
     @property
     def service_enrollment_table(self):
         return f"{self.database_name}.{SERVICE_ENROLLMENT_TABLE}"
+
+    @property
+    def gm_table(self):
+        return f"{self.database_name}.{CHILD_WEIGHT_HEIGHT_FORM_TABLE}"
 
     def aggregate(self):
         df = self.preprocess()
@@ -62,6 +66,8 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
         want_counselling_services = (f"(service_enrollment.want_counselling_services is distinct from 0 "
                                      f"OR service_enrollment.registered_on>='{self.month}')")
         born_in_month = (f"date_trunc('MONTH',case_json__member_dob)='{self.month}'")
+        gm_eligible = f"({age_in_months}<=60) AND {want_growth_tracking_services}"
+
 
         df.createOrReplaceTempView("child_cases")
 
@@ -103,7 +109,27 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
             CASE
                 WHEN breastfeeding_initiated='yes' THEN 1
                 ELSE 0
-            END as immediate_bf
+            END as immediate_bf,
+            CASE
+                WHEN {gm_eligible} AND date_trunc('MONTH', gm.last_weight_recorded_date) = '{self.month}' THEN gm.weight 
+                ELSE NULL 
+            END as weight,
+            CASE
+                WHEN {gm_eligible} AND date_trunc('MONTH', gm.last_height_recorded_date) = '{self.month}' THEN gm.height 
+                ELSE NULL 
+            END as height,
+            CASE
+                WHEN {gm_eligible} AND date_trunc('MONTH', gm.last_zscore_grading_hfa_recorded_date) = '{self.month}' THEN gm.zscore_grading_hfa 
+                ELSE NULL 
+            END as zscore_grading_hfa,
+            CASE
+                WHEN {gm_eligible} AND date_trunc('MONTH', gm.last_zscore_grading_wfh_recorded_date) = '{self.month}' THEN gm.zscore_grading_wfh 
+                ELSE NULL 
+            END as zscore_grading_wfh,
+            CASE
+                WHEN {gm_eligible} AND date_trunc('MONTH', gm.last_zscore_grading_wfa_recorded_date) = '{self.month}' THEN gm.zscore_grading_wfa 
+                ELSE NULL 
+            END as zscore_grading_wfa
         from child_cases
         left join {self.member_case_table} member_case ON (
             child_cases.member_case_id = member_case.case_id
@@ -115,5 +141,9 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
         left join {self.service_enrollment_table} as service_enrollment ON (
             child_cases.member_case_id = service_enrollment.member_case_id AND
             service_enrollment.month = '{self.month}'
+        )
+        left join {self.gm_table} as gm ON (
+            child_cases.case_id = gm.child_case_id AND
+            gm.month = '{self.month}'
         )
         """)
