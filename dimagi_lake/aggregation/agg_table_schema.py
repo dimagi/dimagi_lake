@@ -1,11 +1,13 @@
 from abc import ABC
 
-from pyspark.sql.types import IntegerType, StringType, StructField, StructType
+from pyspark.sql.types import IntegerType, StringType, StructField, StructType, DateType, DoubleType
 
 import localsettings
-from consts import FLWC_LOCATION_TABLE
+from consts import FLWC_LOCATION_TABLE, CHILD_CARE_MONTHLY_TABLE, SERVICE_ENROLLMENT_TABLE
 from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
+from dimagi_lake.aggregation.aggregation_helpers.child_care_monthly import ChildCareMonthlyAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.service_enrollment_form import ServiceEnrollmentAggregationHelper
 from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
                                                    connect_to_db, create_table,
                                                    detach_partition,
@@ -41,6 +43,16 @@ class BaseTable(ABC):
          .saveAsTable(self.datalake_tablename,
                       format='delta',  # Ensures to write data with delta logs, important to ensure ACID writes
                       mode='overwrite',  # Ensures overwriting existing Data with new one
+                      path=self.datalake_tablepath))
+
+    def write_monthly_data(self, df):
+        (df.write.partitionBy(*self._partition_columns)
+         .option('overwriteSchema', True)
+         .option("replaceWhere", f"month = '{self._month}'")
+         .mode("overwrite")
+         .saveAsTable(self.datalake_tablename,
+                      format='delta',
+                      mode='overwrite',
                       path=self.datalake_tablepath))
 
 
@@ -112,3 +124,70 @@ class FlwcLocation(BaseTable):
                     drop_table(cursor, prev_table)
         finally:
             conn.close()
+
+
+
+class ChildCareMonthly(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('flwc_id', StringType(), True),
+        StructField('supervisor_id', StringType(), True),
+        StructField('project_id', StringType(), True),
+        StructField('district_id', StringType(), True),
+        StructField('state_id', StringType(), True),
+        StructField('case_id', StringType(), True),
+        StructField('member_case_id', StringType(), True),
+        StructField('mother_member_case_id', StringType(), True),
+        StructField('name', StringType(), True),
+        StructField('dob', DateType(), True),
+        StructField('gender', StringType(), True),
+        StructField('opened_on', DateType(), True),
+        StructField('death_date', DateType(), True),
+        StructField('age_in_months', DoubleType(), True),
+        StructField('age_in_months_end', DoubleType(), True),
+        StructField('want_nutrition_services', IntegerType(), True),
+        StructField('want_growth_tracking_services', IntegerType(), True),
+        StructField('want_counselling_services', IntegerType(), True),
+        StructField('alive_in_month', IntegerType(), True),
+        StructField('born_in_month', IntegerType(), True),
+        StructField('birth_weight', DoubleType(), True),
+        StructField('low_birth_weight', IntegerType(), True),
+        StructField('immediate_bf', IntegerType(), True),
+    ])
+
+    _aggregator = ChildCareMonthlyAggregationHelper
+    _warehouse_base_table = CHILD_CARE_MONTHLY_TABLE
+    _partition_columns = ('month',)
+
+    def aggregate(self):
+        aggregator = self._aggregator(self._database_name,
+                                      self._domain,
+                                      self._month,
+                                      self.schema)
+        agg_df = aggregator.aggregate()
+        self.write_monthly_data(agg_df)
+
+
+class ServiceEnrollment(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('member_case_id', StringType(), True),
+        StructField('registered_on', DateType(), True),
+        StructField('want_nutrition_services', IntegerType(), True),
+        StructField('want_growth_tracking_services', IntegerType(), True),
+        StructField('want_counselling_services', IntegerType(), True)
+    ])
+
+    _aggregator = ServiceEnrollmentAggregationHelper
+    _warehouse_base_table = SERVICE_ENROLLMENT_TABLE
+    _partition_columns = ('month',)
+
+    def aggregate(self):
+        aggregator = self._aggregator(self._database_name,
+                                      self._domain,
+                                      self._month,
+                                      self.schema)
+        agg_df = aggregator.aggregate()
+        self.write_monthly_data(agg_df)
