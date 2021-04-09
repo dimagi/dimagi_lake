@@ -5,7 +5,9 @@ from pyspark.sql.types import (DateType, DoubleType, IntegerType, StringType,
 
 import env_settings
 from consts import (CHILD_CARE_MONTHLY_TABLE, FLWC_LOCATION_TABLE,
-                    SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE, CHILD_THR_FORM_TABLE, SUPPLEMENTARY_NUTRITION_FORM_TABLE)
+                    SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE, 
+                    CHILD_THR_FORM_TABLE, SUPPLEMENTARY_NUTRITION_FORM_TABLE,
+                    AGG_CHILD_CARE_TABLE)
 from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
 from dimagi_lake.aggregation.aggregation_helpers.child_care_monthly import \
@@ -163,6 +165,7 @@ class ChildCareMonthly(BaseTable):
         StructField('opened_on', DateType(), True),
         StructField('death_date', DateType(), True),
         StructField('age_in_months', DoubleType(), True),
+        StructField('age_group', IntegerType(), True),
         StructField('age_in_months_end', DoubleType(), True),
         StructField('want_nutrition_services', IntegerType(), True),
         StructField('want_growth_tracking_services', IntegerType(), True),
@@ -249,3 +252,45 @@ class ChildTHRForm(BaseTable):
     _aggregator = ChildTHRAggregationHelper
     _warehouse_base_table = CHILD_THR_FORM_TABLE
     _partition_columns = ('month',)
+
+
+class AggChildCare(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('state_id', StringType(), True),
+        StructField('district_id', StringType(), True),
+        StructField('project_id', StringType(), True),
+        StructField('supervisor_id', StringType(), True),
+        StructField('flwc_id', StringType(), True),
+        StructField('location_level', IntegerType(), True),
+        StructField('age_group', IntegerType(), True),
+        StructField('gender', IntegerType(), True),
+        StructField('children_in_month', IntegerType(), True),
+        StructField('alive_in_month', IntegerType(), True),
+        StructField('thr_eligible', IntegerType(), True),
+        StructField('thr_25_days', IntegerType(), True),
+        StructField('pse_eligible', IntegerType(), True),
+        StructField('pse_25_days', IntegerType(), True),
+        StructField('snd_25_days', IntegerType(), True),
+        StructField('gm_eligible', IntegerType(), True),
+        StructField('weight_measured_in_month', IntegerType(), True),
+        StructField('height_measured_in_month', IntegerType(), True),
+        StructField('weight_height_measured_in_month', IntegerType(), True),
+        StructField('hfa_severe_in_month', IntegerType(), True),
+        StructField('hfa_moderate_in_month', IntegerType(), True),
+        StructField('hfa_normal_in_month', IntegerType(), True),
+        StructField('wfh_severe_in_month', IntegerType(), True),
+        StructField('wfh_moderate_in_month', IntegerType(), True),
+        StructField('wfh_normal_in_month', IntegerType(), True),
+        StructField('wfa_severe_in_month', IntegerType(), True),
+        StructField('wfa_moderate_in_month', IntegerType(), True),
+        StructField('wfa_normal_in_month', IntegerType(), True),
+        StructField('born_in_month', IntegerType(), True),
+        StructField('immediate_bf_in_month', IntegerType(), True),
+        StructField('born_and_weighed_in_month', IntegerType(), True),
+        StructField('low_birth_weight_in_month', IntegerType(), True)
+    ])
+    _aggregator = None
+    _warehouse_base_table = AGG_CHILD_CARE_TABLE
+    _partition_columns = ('month', 'location_level')

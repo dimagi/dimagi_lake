@@ -66,17 +66,20 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
 
         age_in_months = f"datediff('{self.month}', member_case.case_json__member_dob)/30.4"
         age_in_months_end = f"datediff(add_months('{self.month}', 1), member_case.case_json__member_dob)/30.4"
-
+        alive_in_month = (f"(member_case.case_json__member_death_date is NULL  "
+                          f"OR member_case.case_json__member_death_date > '{self.month}')")
         want_nutrition_services = (f"(service_enrollment.want_nutrition_services is distinct from 0 "
                                    f" OR service_enrollment.registered_on>='{self.month}')")
         want_growth_tracking_services = (f"(service_enrollment.want_growth_tracking_services is distinct from 0 "
                                          f" OR service_enrollment.registered_on>='{self.month}')")
         want_counselling_services = (f"(service_enrollment.want_counselling_services is distinct from 0 "
                                      f"OR service_enrollment.registered_on>='{self.month}')")
+        
+
         born_in_month = (f"date_trunc('MONTH',case_json__member_dob)='{self.month}'")
-        gm_eligible = f"({age_in_months}<=60) AND {want_growth_tracking_services}"
-        pse_eligible = f"({age_in_months}>36 AND {age_in_months}<=72) AND {want_nutrition_services}"
-        thr_eligible = f"({age_in_months}>6 AND {age_in_months}<=36) AND {want_nutrition_services}"
+        gm_eligible = f"({age_in_months}<=60) AND {want_growth_tracking_services} AND ({alive_in_month})"
+        pse_eligible = f"({age_in_months}>36 AND {age_in_months}<=72) AND {want_nutrition_services} AND ({alive_in_month})"
+        thr_eligible = f"({age_in_months}>6 AND {age_in_months}<=36) AND {want_nutrition_services} AND ({alive_in_month})"
 
         df.createOrReplaceTempView("child_cases")
 
@@ -100,11 +103,21 @@ class ChildCareMonthlyAggregationHelper(BaseAggregationHelper):
             member_case.case_json__member_death_date as death_date,
             {age_in_months} as age_in_months,
             {age_in_months_end} as age_in_months_end,
+            CASE 
+                WHEN {age_in_months} <=6 THEN 6
+                WHEN {age_in_months} <=12 THEN 12
+                WHEN {age_in_months} <=24 THEN 24
+                WHEN {age_in_months} <=36 THEN 36
+                WHEN {age_in_months} <=48 THEN 48
+                WHEN {age_in_months} <=60 THEN 60
+                WHEN {age_in_months} <=72 THEN 72
+                ELSE NULL
+            END as age_group,
             {want_nutrition_services} as want_nutrition_services,
             {want_growth_tracking_services} as want_growth_tracking_services,
             {want_counselling_services} as want_counselling_services,
             CASE
-                WHEN member_case.case_json__member_death_date is NULL THEN 1
+                WHEN {alive_in_month} THEN 1
                 ELSE 0
             END as alive_in_month,
             CASE

@@ -1,15 +1,15 @@
 from pyspark.sql import SparkSession
 
-import localsettings
+import env_settings
 
 SPARK = (SparkSession.builder
          .appName('my_awesome')
          .config('spark.sql.shuffle.partitions', '2')
          .config('spark.databricks.delta.merge.repartitionBeforeWrite.enabled', 'true')
-         .config("javax.jdo.option.ConnectionURL", localsettings.METASTORE_CONNECT_URI)
-         .config("javax.jdo.option.ConnectionDriverName", "org.postgresql.Driver")
-         .config("javax.jdo.option.ConnectionUserName", localsettings.METASTORE_USERNAME)
-         .config("javax.jdo.option.ConnectionPassword", localsettings.METASTORE_PASSWORD)
+        #  .config("javax.jdo.option.ConnectionURL", env_settings.METASTORE_CONNECT_URI)
+        #  .config("javax.jdo.option.ConnectionDriverName", "org.postgresql.Driver")
+        #  .config("javax.jdo.option.ConnectionUserName", env_settings.METASTORE_USERNAME)
+        #  .config("javax.jdo.option.ConnectionPassword", env_settings.METASTORE_PASSWORD)
          .enableHiveSupport()
          .getOrCreate())
 SPARK.sparkContext.setLogLevel("ERROR")
