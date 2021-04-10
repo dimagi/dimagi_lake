@@ -86,9 +86,10 @@ class CaseKafkaSink(BaseKafkaSink):
 
         records_to_upsert = defaultdict(lambda: defaultdict(list))
         records_to_delete = defaultdict(lambda: defaultdict(list))
+        allowed_cases = [case_type for case_type,table_name  in ALLOWED_CASES]
         for msg in kafka_messages:
             msg_meta = json.loads(msg.value)
-            if not (msg_meta['document_subtype'] in ALLOWED_CASES and
+            if not (msg_meta['document_subtype'] in allowed_cases and
                     msg_meta['domain'] in DATA_LAKE_DOMAIN):
                 continue
             if msg_meta['is_deletion']:
@@ -107,9 +108,11 @@ class FormKafkaSink(BaseKafkaSink):
 
         records_to_upsert = defaultdict(lambda: defaultdict(list))
         records_to_delete = defaultdict(lambda: defaultdict(list))
+
+        allowed_forms = [form_type for form_type,table_name  in ALLOWED_FORMS]
         for msg in kafka_messages:
             msg_meta = json.loads(msg.value)
-            if not (msg_meta['document_subtype'] in ALLOWED_FORMS and
+            if not (msg_meta['document_subtype'] in allowed_forms and
                     msg_meta['domain'] in DATA_LAKE_DOMAIN):
                 continue
             record_type = trim_xmlns_id(msg_meta['document_subtype'])

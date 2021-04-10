@@ -32,7 +32,7 @@ class BaseAggregationHelper(ABC):
 
     def rollup_data(self, df, location_level):
         """
-        Aggregate the up in the location hierarchy from location_level+1  to location_level level
+        Aggregate the data up in the location hierarchy from location_level+1  to location_level level
         """
         pass
 

@@ -24,7 +24,7 @@ class BaseTable(ABC):
     """
     _aggregator = None
     _warehouse_base_table = None
-
+    _partition_columns = []
     def __init__(self, domain, month):
         self._domain = domain
         self._month = month

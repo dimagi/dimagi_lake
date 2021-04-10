@@ -4,13 +4,14 @@ from dimagi_lake.aggregation.utils import (get_location_column_rollup_calc,
                                            get_location_group_by_columns)
 from dimagi_lake.utils import clean_name
 from spark_session_handler import SPARK
+from consts import RAW_LOCATION
 
 
 class AggLocationHelper(BaseAggregationHelper):
 
     @property
     def source_tablename(self):
-        return "raw_location"
+        return f"{self.database_name}.{RAW_LOCATION}"
 
     def aggregate(self):
         df = self.agg_base_data()
@@ -38,7 +39,7 @@ class AggLocationHelper(BaseAggregationHelper):
             state_name,
             5 as location_level,
             '{self.domain}' as domain
-        FROM {self.database_name}.{self.source_tablename} as source_table
+        FROM {self.source_tablename} as source_table
         WHERE (
             state_is_archived is distinct from true AND
             district_is_archived is distinct from true AND
