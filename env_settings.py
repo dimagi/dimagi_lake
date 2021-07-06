@@ -27,5 +27,5 @@ JDBC_PROPS = {
 
 
 CHECKPOINT_BASE_DIR = os.getenv('CHECKPOINT_BASE_DIR', 'file:///tmp/dimagi-lake/kafka_offsets')
-HQ_DATA_PATH = os.getenv('CHECKPOINT_BASE_DIR', 'file:///tmp/dimagi-lake/commcare')
-AGG_DATA_PATH = os.getenv('CHECKPOINT_BASE_DIR', 'file:///tmp/dimagi-lake/aggregated')
+HQ_DATA_PATH = os.getenv('HQ_DATA_PATH', 'file:///tmp/dimagi-lake/commcare')
+AGG_DATA_PATH = os.getenv('AGG_DATA_PATH', 'file:///tmp/dimagi-lake/aggregated')

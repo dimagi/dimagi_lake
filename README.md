@@ -41,9 +41,9 @@ This is an Spark Application Which is used to ingest Form and Case Data into the
 - [x] Capture republish of Forms and Cases
 - [x] Allows on-the-fly custom transformation before saving records.
 - [x] Allows field addition and deletion in cases/forms
-- [ ] Capture Form deletes
-- [ ] Capture case deletes
-- [ ] Capture Location Changes
+- [x] Capture Form deletes
+- [x] Capture case deletes
+- [x] Capture Location Changes
 - [ ] Allows Field datatype change in cases/forms
 
 ## How to Setup
@@ -58,7 +58,17 @@ Install `Spark 3.0.2, pre-built for apache hadoop 3.2 and later` version from th
 
 https://spark.apache.org/downloads.html
 
-### Setup Spark
+## Setup Spark
+
+### On Mac using Brew (recommended if you have a Mac)
+1. Run:
+    ```
+    brew cask install java;
+    brew install scala;
+    brew install apache-spark
+    ```
+
+### On others using Binary package
 1. Download
     ```
     https://mirrors.estointernet.in/apache/spark/spark-3.0.2/spark-3.0.2-bin-hadoop3.2.tgz
@@ -84,7 +94,7 @@ https://spark.apache.org/downloads.html
     pyspark --version
     ```
 
-6. Download required repository to connect to S3
+6. Download required repository to connect to S3(Dont need for local setup)
     ```
     cd /usr/local/spark/jars;
     wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.2.0/hadoop-aws-3.2.0.jar;
@@ -96,16 +106,27 @@ https://spark.apache.org/downloads.html
     # Its for Ubuntu, for other platforms JavaHome could be different
     export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/  
     ```
-### Setup Hive Metastore
-1. Install Postgres.
+
+## Setup Hive Metastore
+Metastore is used to store the metatables for the data you are writing to the datalake using Spark. By default it stores the meta info into the local dist and in the directory from where you are running the spark application. But it has two problems:
+1. It would be difficult to share the metainformation between spark applications. Eg: If Aggregation wants to access the tables created by Datalake ingestion.
+2. Storing the data directory into local disk might not be safe and we would have to separately manage its appropriate availability and security.
+
+So, we will setup a central hive metastore using postgres and tell Spark to use that as a metastore.
+
+1. Install Postgres. You can also use HQ postgres if you have that setup.
 2. Create a Database named `metastore_db`
 3. Download following Migration files:
     ```
-    https://github.com/apache/hive/blob/master/metastore/scripts/upgrade/postgres/hive-schema-2.3.0.postgres.sql
-    https://github.com/apache/hive/blob/master/metastore/scripts/upgrade/postgres/hive-txn-schema-2.3.0.postgres.sql
+    wget https://raw.githubusercontent.com/apache/hive/master/metastore/scripts/upgrade/postgres/hive-schema-2.3.0.postgres.sql;
+
+    wget https://raw.githubusercontent.com/apache/hive/master/metastore/scripts/upgrade/postgres/hive-txn-schema-2.3.0.postgres.sql
     ```
-4. Run these migration files over `metastore_db`.
-5. Create a file `hive-site.xml` in `/usr/local/spark/conf` and add the following content
+4. Change `\i hive-txn-schema-2.3.0.postgres.sql;` to `\i absolute/path/to/hive-txn-schema-2.3.0.postgres.sql;` in hive-schema-2.3.0.postgres.sql.
+
+5. Login into Postgres and switch to `metastore_db`.
+6. Run `\i absolute/path/to/hive-schema-2.3.0.postgres.sql`.
+7. Create a file `hive-site.xml` in `$SPARK_HOME/conf/` and add the following content and fill the appropriate creds.
     ```
     <?xml version="1.0" encoding="UTF-8"?>
     <configuration>
@@ -140,13 +161,20 @@ https://spark.apache.org/downloads.html
 5. Your Hive Metastore is now ready.
 
 ### Integration with HQ Codebase
+At the moment Dimagi lake reuses HQ code to pull out the records for the given ids. Therefore, it depends on the HQ code base and hence it uses same python environment as HQ and should also know where the HQ code is residing in the system.
+
 1. Setup the HQ code on the machine. this machine does not need to run any HQ service but HQ codebase should point to the right place where these services are running.
 2. Add the following line in `/usr/local/spark/conf/spark-env.sh`
     ```
     export PYTHONPATH=path/to/commcare-hq_code:path/to/dimagi_lake/home_directory
     ```
+3. Add the following in the `~/.bash_profile` or `~/.bashrc` file so that pyspark can use same python as hq.
+    ```
+    export PYSPARK_DRIVER_PYTHON='/Users/dsi/projects/commcare-hq/venv/bin/python3'
+    export PYSPARK_PYTHON=/Users/dsi/projects/commcare-hq/venv/bin/python3
+    ```
 
-### Update Spark Default Setting
+### Update Spark Default Setting(No need for Local setup)
 Open `/usr/local/spark/conf/spark-defaults.conf` and add the following settings
 ```
 # For S3. Not required if S3 is not used 
@@ -162,9 +190,13 @@ spark.hadoop.fs.s3a.secret.key {AWS_Secret_key}
 spark.shuffle.service.enabled true
 
 ```
-### Update Settings
-1. Point Kafka to right place where Kafka for HQ is running.
-2. Update Metastore Credentials
+### Update Dimagi lake Settings
+You will have to add the environment varilable to update the config for:
+1. Kafka creds
+2. Metastore DB Creds : where Meta tables will be stored
+3. Dashboard DB Creds : Where Aggregation output will be pushed.
+4. Storage Location directory: Where Actuall data will be stored. 
+5. 
 
 
 
