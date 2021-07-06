@@ -7,6 +7,7 @@ Repository contains the code which is used for Form and cases ingestion into the
 2. Dependencies
 3. Scope
 4. How to setup
+5. Commonly Asked Questions
 
 
 
@@ -54,13 +55,13 @@ This is an Spark Application Which is used to ingest Form and Case Data into the
 9. Scala 1.12
 
 ### Download Spark
-Install `Spark 3.0.2, pre-built for apache hadoop 3.2 and later` version from the following link
+Install `Spark 3.0.2, pre-built for apache hadoop 3.2 and later` version from the following link. This specific version is important(Specially for server setup).
 
 https://spark.apache.org/downloads.html
 
-## Setup Spark
+### Setup Spark
 
-### On Mac using Brew (recommended if you have a Mac)
+**On Mac using Brew (recommended if you have a Mac)**
 1. Run:
     ```
     brew cask install java;
@@ -68,7 +69,7 @@ https://spark.apache.org/downloads.html
     brew install apache-spark
     ```
 
-### On others using Binary package
+**On others using Binary package**
 1. Download
     ```
     https://mirrors.estointernet.in/apache/spark/spark-3.0.2/spark-3.0.2-bin-hadoop3.2.tgz
@@ -107,7 +108,7 @@ https://spark.apache.org/downloads.html
     export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/  
     ```
 
-## Setup Hive Metastore
+### Setup Hive Metastore
 Metastore is used to store the metatables for the data you are writing to the datalake using Spark. By default it stores the meta info into the local dist and in the directory from where you are running the spark application. But it has two problems:
 1. It would be difficult to share the metainformation between spark applications. Eg: If Aggregation wants to access the tables created by Datalake ingestion.
 2. Storing the data directory into local disk might not be safe and we would have to separately manage its appropriate availability and security.
@@ -196,12 +197,64 @@ You will have to add the environment varilable to update the config for:
 2. Metastore DB Creds : where Meta tables will be stored
 3. Dashboard DB Creds : Where Aggregation output will be pushed.
 4. Storage Location directory: Where Actuall data will be stored. 
-5. 
 
 
-
-### Running it
+Following are the environment variables:
 ```
-spark-submit --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" <path/to/dimagi_lake>/main.py <kafka_topic_name>
+export KAFKA_BOOTSTRAP_SERVER_HOST=localhost
+export KAFKA_BOOTSTRAP_SERVER_PORT=9092
+
+export METASTORE_HOST=localhost
+export METASTORE_PORT=5432
+export METASTORE_DB=metastore_db
+export METASTORE_USERNAME=commcarehq
+export METASTORE_PASSWORD=commcarehq
+
+export DASHBOARD_DB_HOST=localhost
+export DASHBOARD_DB_PORT=5432
+export DASHBOARD_DB_NAME=metastore_db
+export DASHBOARD_DB_USERNAME=commcarehq
+export DASHBOARD_DB_PASSWORD=commcarehq
+
+#Below locations should be good for local setup. Change below values appropriately based on what location and what storage you want to use on server.
+
+export CHECKPOINT_BASE_DIR=file:///tmp/dimagi-lake/kafka_offsets
+export HQ_DATA_PATH=file:///tmp/dimagi-lake/kafka_offsets
+export AGG_DATA_PATH=file:///tmp/dimagi-lake/kafka_offsets
 ```
+
+### Update Allowed List in consts.py
+1. Ensure the domain you are submitting forms from is added to the `DATA_LAKE_DOMAIN` list
+2. Ensure the Forms and cases you are submitting are added to the `ALLOWED_FORMS` and `ALLOWED_CASES` list
+
+### Running dimagi lake
+
+1. For ingestion
+```
+spark-submit --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" --files application_config.yaml <path/to/dimagi_lake>/main.py ingestion <kafka-topic>
+```
+
+2. For aggregation
+```
+spark-submit --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" --files application_config.yaml <path/to/dimagi_lake>/main.py aggregation <table_name(check table_mapping.py for this)> <domain_name> <month>
+```
+
+
+
+## Commonly Asked Questions
+1. How to start thrift Server?
+
+    - Run Following from `$SPARK_HOME`. You can read about it [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html) 
+
+```
+./sbin/start-thriftserver.sh --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension"
+```
+2. Why are we processing records in Chunks and not as per records bases like a true stream?
+    - Because When you are handling Data with Spark. You data is actually written to files in Disk/Object Storage. If you will process data per record bases, it will have to read and write more files which will increase the IOps. It will be further slow down the system. In short, We can process larger data much faster than probably writing it.
+    - You should also try to achieve the big chunk processing and lesser writing. If the type of forms increases, you can running multiple instances of ingestion process and split the form types among them.
+
+3. Why Do we store the aggergated Data back to Dashboard database? Or why can't dashboard directly pull data from Datalake storage if we are storing aggregated data into datalake storage as well.
+    - Spark is good for large size data processing it is not very efficient for making index like queries. Eg: fetching a single records based on indexes say get me the launched flwcs in this states. In Such queries Postgres performs much better. Whereas, If you want to process/Aggregate huge data spark is better.
+    - Its a standard technique to separate out storages for user end(dashboard) and analytics(BI tool/aggregation) end of the product. So if someone is doing complex data pulls or if aggregation is running, it should not impact the performance of dashbaord.
+
 
