@@ -281,33 +281,32 @@ After Metabase if setup, you can add a database and select the database type as 
 ## FAQ
 
 1. Why are we processing records in Chunks and not as per records bases like a true stream?
-    - Because When you are handling Data with Spark. You data is actually written to files in Disk/Object Storage. If you will process data per record bases, it will have to read and write more files which will increase the IOps. It will be further slow down the system. In short, We can process larger data much faster than probably writing it.
-    - You should also try to achieve the big chunk processing and lesser writing. If the type of forms increases, you can running multiple instances of ingestion process and split the form types among them.
+    - Because When you are handling Data with Spark. You data is actually written to files in Disk/Object Storage. If you will process data per record bases, it will have to read and write more files which will increase the IOps. It will further slow down the system. In short, We can process larger data much faster than probably writing it.
+    - You should also try to achieve the big chunk processing and lesser writing. If the type of forms increases, you can runn multiple instances of ingestion process and split the form types among them.
 
 2. Why Do we store the aggergated Data back to Dashboard database? Or why can't dashboard directly pull data from Datalake storage if we are storing aggregated data into datalake storage as well.
-    - Spark is good for large size data processing it is not very efficient for making index like queries. Eg: fetching a single records based on indexes say get me the launched flwcs in this states. In Such queries Postgres performs much better. Whereas, If you want to process/Aggregate huge data spark is better.
+    - Spark is good for large size data processing it is not very efficient for making index like queries. Eg: fetching a single records based on indexes say get me the launched flwcs in this state. In Such queries Postgres performs much better. Whereas, If you want to process/Aggregate huge data, spark is better.
     - Its a standard technique to separate out storages for user end(dashboard) and analytics(BI tool/aggregation) end of the product. So if someone is doing complex data pulls or if aggregation is running, it should not impact the performance of dashbaord.
-
 
 3. How do I allow the BI tool to connect as a client using JDBC connection to query the data?
     - Start Spark thrift Server and connect your BI tool to it. Command to start STS(Spark Thrift Server) is mentioned above.
     - Detailed information about STS is [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html)
 
 4. Is there a way to connect to STS from CLI for quick testing?
-    - Yes, you can use the inbuilt CLI tool, beeline to connect to Spark Thrift Server.
+    - Yes, you can use the inbuilt CLI tool, beeline to connect to Spark Thrift Server. Command mentioned above in STS section.
     
 5. What is the use of DeltaLake?
-    - When we write any data using Spark, it is written in form of files. Imagine, if your data is to be written in 10 files but some error happened in middle and 6 files could get written. In this case, you will endup in an inconsistent state.
+    - When we write any data using Spark, it is written in form of files. Imagine, if your data is to be written in 10 files but some error happened in middle and only 6 files could get written. In this case, you will endup in an inconsistent state.
     - Imagine you want to update a record out of all the stored records based on some id. You can't really directly do that in Spark because spark only allows you to create or append the data. It does not allows to update the existing files. Reading and writing the entire data collection would be very inefficient and we would need to deal with all the issues of inconsistency by ourself.
-    - Delta lake helps to solve above issues. It mimics the ACID properties of a SQL database by using Delta Logs. It also provide clean way to perform DDL queries(UPDATE, DELETE, MERGE)
+    - Delta lake helps to solve above issues. It mimics the ACID properties of a SQL database by using Delta Logs. It also provides clean way to perform DDL queries(UPDATE, DELETE, MERGE)
     - Read more about it [here](https://docs.delta.io/latest/index.html)
-6. What happens what we perform update/delete/merge using Delta Lake?
+6. What happens when we perform update/delete/merge using Delta Lake?
     - Deltalake holds your data in form of versions. When you perform above queries:
         - It find the appropriate partition file needs to be updated.
         - Creates a new copy of that file with updated data.
         - Marks this new file to be the part of the latest Version.
         - Whenever a table is then queried, By default only the latest version data is pulled.
-        - One can delete old versions using `vaccum`
+        - One can delete old versions using `vaccum` provided by Deltalake.
 7. What are important things to know about DeltaLake?
     - Its Merge Query feature: https://docs.delta.io/latest/delta-update.html#upsert-into-a-table-using-merge
     - Its Concurrency Control during DDL: https://docs.delta.io/latest/concurrency-control.html
@@ -333,7 +332,7 @@ After Metabase if setup, you can add a database and select the database type as 
         - https://spark.apache.org/docs/latest/spark-standalone.html#high-availability
 
 12. What is the storage layer we are using?
-    - Right now we have decided to move forward with AWS S3. But, the decision depends on the cloud we are using and the object storage it is providing. You can use following benchmark to see if you want to use hadoop or CSP provided Storage:
+    - Right now we have decided to move forward with AWS S3. But, the decision depends on the cloud we are using and the object storage it is providing. You can use following benchmarks to see if you want to use hadoop or CSP provided Storage:
         - Performance of data reading, writing, quering.
         - Data Consistency
         - Effort of using
