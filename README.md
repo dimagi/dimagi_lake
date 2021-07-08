@@ -6,8 +6,10 @@ Repository contains the code which is used for Form and cases ingestion into the
 1. How It Works
 2. Dependencies
 3. Scope
-4. How to setup
-5. Commonly Asked Questions
+4. How to setup Dimagi Lake
+5. Spark Thrift Server
+6. BI Tool
+6. FAQ
 
 
 
@@ -55,7 +57,7 @@ This is an Spark Application Which is used to ingest Form and Case Data into the
 9. Scala 1.12
 
 ### Download Spark
-Install `Spark 3.0.2, pre-built for apache hadoop 3.2 and later` version from the following link. This specific version is important(Specially for server setup).
+Install `Spark 3.0.2, pre-built for apache hadoop 3.2 and later` version from the following link. This specific version is important.
 
 https://spark.apache.org/downloads.html
 
@@ -87,7 +89,8 @@ https://spark.apache.org/downloads.html
 
 4. Set environment variable
     ```
-    export SPARK_HOME = /usr/loca/spark/
+    export SPARK_HOME=path/to/where/spark/is/installed #/usr/local/Cellar/apache-spark/3.0.1/libexec for mac
+    export PATH=<path/to/where/spark/is/installed>/bin #/usr/local/Cellar/apache-spark/3.0.1/bin:$PATH for mac
     ```
 
 5. Confirm everything went fine
@@ -159,7 +162,9 @@ So, we will setup a central hive metastore using postgres and tell Spark to use 
     </property>
     </configuration>
     ```
-5. Your Hive Metastore is now ready.
+5. Download Postgres driver Jar from here https://jdbc.postgresql.org/download.html and put it in $SPARK_HOME/jars directory.
+
+Your Hive Metastore is now ready.
 
 ### Integration with HQ Codebase
 At the moment Dimagi lake reuses HQ code to pull out the records for the given ids. Therefore, it depends on the HQ code base and hence it uses same python environment as HQ and should also know where the HQ code is residing in the system.
@@ -239,22 +244,92 @@ spark-submit --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-s
 spark-submit --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" --files application_config.yaml <path/to/dimagi_lake>/main.py aggregation <table_name(check table_mapping.py for this)> <domain_name> <month>
 ```
 
-
-
-## Commonly Asked Questions
-1. How to start thrift Server?
-
-    - Run Following from `$SPARK_HOME`. You can read about it [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html) 
+## Spark Thrift Server(STS)
+Its an spark application comes with the spark package. When you run it, it allows external applications to connect to it as a JDBC Client and query the data using SQL queries same as quering any other SQL database like Postgres. You can read about it more [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html). We need this because we want to allow internal/external users to query the data using BI tool and BI tool needs to connect to SPARK cluster as a client. Run the following command to start the Spark Thrift Server for our setup:
 
 ```
-./sbin/start-thriftserver.sh --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension"
+$SPARK_HOME/sbin/start-thriftserver.sh --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension"
+
 ```
-2. Why are we processing records in Chunks and not as per records bases like a true stream?
+
+Now to test it as a client from cli. Spark Package comes with a CLI tool called `beeline`.  Use it to connect to STS:
+```
+    $SPARK_HOME/bin/spark-beeline
+    beeline> !connect jdbc:hive2://localhost:10000
+```
+
+## BI tool
+BI tools are great to see the quick visualization of the data and to query data fast. For this System We are using Metabase as our BI tool. Setting up Metabase is pretty simple. We are using Jar method to run the Metabase([here](https://www.metabase.com/docs/latest/operations-guide/installing-metabase.html)). 
+After Downloading Jar you just need to run:
+```
+java -jar metabase.jar
+```
+Above page linked shows the setup steps in detail.
+After Metabase if setup, you can add a database and select the database type as Spark-SQL and put the credentials.
+
+
+## FAQ
+
+1. Why are we processing records in Chunks and not as per records bases like a true stream?
     - Because When you are handling Data with Spark. You data is actually written to files in Disk/Object Storage. If you will process data per record bases, it will have to read and write more files which will increase the IOps. It will be further slow down the system. In short, We can process larger data much faster than probably writing it.
     - You should also try to achieve the big chunk processing and lesser writing. If the type of forms increases, you can running multiple instances of ingestion process and split the form types among them.
 
-3. Why Do we store the aggergated Data back to Dashboard database? Or why can't dashboard directly pull data from Datalake storage if we are storing aggregated data into datalake storage as well.
+2. Why Do we store the aggergated Data back to Dashboard database? Or why can't dashboard directly pull data from Datalake storage if we are storing aggregated data into datalake storage as well.
     - Spark is good for large size data processing it is not very efficient for making index like queries. Eg: fetching a single records based on indexes say get me the launched flwcs in this states. In Such queries Postgres performs much better. Whereas, If you want to process/Aggregate huge data spark is better.
     - Its a standard technique to separate out storages for user end(dashboard) and analytics(BI tool/aggregation) end of the product. So if someone is doing complex data pulls or if aggregation is running, it should not impact the performance of dashbaord.
 
 
+3. How do I allow the BI tool to connect as a client using JDBC connection to query the data?
+    - Start Spark thrift Server and connect your BI tool to it. Command to start STS(Spark Thrift Server) is mentioned above.
+    - Detailed information about STS is [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html)
+
+4. Is there a way to connect to STS from CLI for quick testing?
+    - Yes, you can use the inbuilt CLI tool, beeline to connect to Spark Thrift Server.
+    
+5. What is the use of DeltaLake?
+    - When we write any data using Spark, it is written in form of files. Imagine, if your data is to be written in 10 files but some error happened in middle and 6 files could get written. In this case, you will endup in an inconsistent state.
+    - Imagine you want to update a record out of all the stored records based on some id. You can't really directly do that in Spark because spark only allows you to create or append the data. It does not allows to update the existing files. Reading and writing the entire data collection would be very inefficient and we would need to deal with all the issues of inconsistency by ourself.
+    - Delta lake helps to solve above issues. It mimics the ACID properties of a SQL database by using Delta Logs. It also provide clean way to perform DDL queries(UPDATE, DELETE, MERGE)
+    - Read more about it [here](https://docs.delta.io/latest/index.html)
+6. What happens what we perform update/delete/merge using Delta Lake?
+    - Deltalake holds your data in form of versions. When you perform above queries:
+        - It find the appropriate partition file needs to be updated.
+        - Creates a new copy of that file with updated data.
+        - Marks this new file to be the part of the latest Version.
+        - Whenever a table is then queried, By default only the latest version data is pulled.
+        - One can delete old versions using `vaccum`
+7. What are important things to know about DeltaLake?
+    - Its Merge Query feature: https://docs.delta.io/latest/delta-update.html#upsert-into-a-table-using-merge
+    - Its Concurrency Control during DDL: https://docs.delta.io/latest/concurrency-control.html
+    - Schema Evolution: https://databricks.com/blog/2019/09/24/diving-into-delta-lake-schema-enforcement-evolution.html
+8. Which Version of DeltaLake was used:
+    - `0.8.0`
+9. How to setup Multi node spark Cluster?
+    - I used the following Blogs. These are pretty good:
+        - https://medium.com/ymedialabs-innovation/apache-spark-on-a-multi-node-cluster-b75967c8cb2b
+        - https://medium.com/@jootorres_11979/how-to-install-and-set-up-an-apache-spark-cluster-on-hadoop-18-04-b4d70650ed42
+10. What are the resource/cluster managers spark can use?
+    - Actually Three:
+        - Yarn: It comes with hadoop package. We dont use it because we dont use hadoop. But if for any project we choose to use hadoop, this should be ours prefered choice.
+        - Mesos: Its a generic cluster manager. Some people also call it as Operating System of a cluster. Because of its generic nature its relatively difficult to maintain and its a bit overkill for our need.
+        - Kubernetes(Experimental): It does not really make sense to learn a total new thing. Kub8 is itself a huge concept to gain mastery in. So, that is why we did not choose Kub8.
+        - Spark Standalone: Spark comes with a cluster manager with its package. This manager is customised for spark only and provide all the needed features like custom resource allocation, dynamic resource allocation, tracking UI etc. So, we use it for our purpose.
+    - Here is the link you can read about these cluster managers for spark:
+        - https://data-flair.training/blogs/apache-spark-cluster-managers-tutorial/
+        - https://dzone.com/articles/deep-dive-into-spark-cluster-management
+    
+11. How to ensure spark for production?
+    - For production spark can be run in high availability mode. Below if the link you can read about it.
+        - https://spark.apache.org/docs/latest/spark-standalone.html#high-availability
+
+12. What is the storage layer we are using?
+    - Right now we have decided to move forward with AWS S3. But, the decision depends on the cloud we are using and the object storage it is providing. You can use following benchmark to see if you want to use hadoop or CSP provided Storage:
+        - Performance of data reading, writing, quering.
+        - Data Consistency
+        - Effort of using
+        - Reliability
+
+13. What if we have acquired a large group of customer who wants to analyse the data themselves using the BI tool(Metabase)? What are the things we need to take care accordingly?
+    - Spark Cluster Size: Will the existing number of nodes in your spark cluster be able to handle that load? If not, you can add more worker nodes to your spark cluster and it would work like charm.
+    -  Will your metabase worker be able to handle that many requests? If not, You can [horizontally scale](https://www.metabase.com/learn/data-diet/analytics/metabase-at-scale#horizontal-scaling) Metabase by putting a load balancer in front of it and spawning up multiple instances of it. 
+        
