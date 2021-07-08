@@ -1,5 +1,5 @@
 from consts import KAFKA_CASE_TOPIC, KAFKA_FORM_TOPIC, KAFKA_LOCATION_TOPIC
-from dimagi_lake.aggregation.table_mapping import TABLE_MAPPING
+from dimagi_lake.aggregation.nutrition_project.table_mapping import TABLE_MAPPING
 from dimagi_lake.ingestion.kafka_sink import (CaseKafkaSink, FormKafkaSink,
                                               LocationKafkaSink)
 from dimagi_lake.migration.domain_migration import migrate_domain_tables

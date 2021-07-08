@@ -1,4 +1,4 @@
-from dimagi_lake.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.base_helper import BaseAggregationHelper
 from spark_session_handler import SPARK
 
 
