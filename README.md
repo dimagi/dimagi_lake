@@ -1,5 +1,7 @@
 # Dimagi Lake
-Repository contains the code which is used for Form and cases ingestion into the Datalake.
+Repository contains the code for:
+ - Forms, Cases and Location ingestion into the Datalake
+ - Data aggregation Code for Data warehouse
 
 
 ## Menu
@@ -14,17 +16,23 @@ Repository contains the code which is used for Form and cases ingestion into the
 
 
 ## How It Works
-This is an Spark Application Which is used to ingest Form and Case Data into the Datalake. It runs as a services and starts a Kafka Stream to periodically Pull ChangeMeta from kafka. Following Points explains how it works:
-1. It starts a Kafka stream using Spark Structure Steaming
-2. Pulls `<=MAX_RECORDS_TO_PROCESS` number of messages from Kafka in a single Batch. Constant `MAX_RECORDS_TO_PROCESS` in settings.py file can be set to virtually any value depending on the resources available.
-3. After Pulling ChangeMeta from Kafka. Split the Changes into different `domain` and `subtype`.
-4. Pull The real records from HQ Postgres using `CaseAccessors` and `FormAccessors` of HQ Code.
-5. Location Information is added to the records for better downstream analysis.
-6. Records are flattened. Flattening is required becaused of a potential [bug](https://github.com/delta-io/delta/issues/170#issuecomment-784156234) present in a library we use.
-7. If its a new type of form/case, then a new corresponding table is created in the metastore and it's data is directly written to the storage on a new location `\commcare\<domain>\<kafka_topic>\<case_type\form_xmlns>`
-8. For records whose corresponding table is already present in the metastore, the records are then Merged with the existing Data in the Datalake. Merging happens using Upsert Operation Using a spark library called [Delta Lake](https://docs.delta.io/latest/delta-intro.html). This makes the Data merging Possible. 
-9. We are only keeping the latest copy of records in the Datalake. When a case is udpated for example, Only the latest copy of case is maintained in the Datalake. Older versions can also be accessed if we want. But, since the use case is only to have the latest copy, we can remove the Older version periodically to free up space.
-10. To resolve Small Files Problem in Datalake, Data would be periodically be re-partitioned to reduce the number of files. It would make the data query faster.
+This is an Spark Application Which is used for two purposes:
+- To ingest Form and Case Data into the Datalake. It runs as a services and starts a Kafka Stream to periodically Pull ChangeMeta from kafka. Following Points explains how it works:
+    1. It starts a Kafka stream using Spark Structure Steaming
+    2. Pulls `<=MAX_RECORDS_TO_PROCESS` number of messages from Kafka in a single Batch. Constant `MAX_RECORDS_TO_PROCESS` in settings.py file can be set to virtually any value depending on the resources available.
+    3. After Pulling ChangeMeta from Kafka. Split the Changes into different `domain` and `subtype`.
+    4. Pull The real records from HQ Postgres using `CaseAccessors` and `FormAccessors` of HQ Code.
+    5. Location Information is added to the records for better downstream analysis.
+    6. Records are flattened. Flattening is required becaused of a potential [bug](https://github.com/delta-io/delta/issues/170#issuecomment-784156234) present in a library we use.
+    7. If its a new type of form/case, then a new corresponding table is created in the metastore and it's data is directly written to the storage on a new location `\commcare\<domain>\<kafka_topic>\<case_type\form_xmlns>`
+    8. For records whose corresponding table is already present in the metastore, the records are then Merged with the existing Data in the Datalake. Merging happens using Upsert Operation Using a spark library called [Delta Lake](https://docs.delta.io/latest/delta-intro.html). This makes the Data merging Possible. 
+    9. We are only keeping the latest copy of records in the Datalake. When a case is udpated for example, Only the latest copy of case is maintained in the Datalake. Older versions can also be accessed if we want. But, since the use case is only to have the latest copy, we can remove the Older version periodically to free up space.
+    10. To resolve [Small Files Problem](https://www.upsolver.com/blog/small-file-problem-hdfs-s3) in Datalake, Data would be periodically be re-partitioned to reduce the number of files. It would make the data query faster.
+- To aggregate the Data for Data warehouse(In Progress). Each of the table aggregation would start as a separate spark application with `spark-submit` command based on different arguments you pass while invoking it. General flow of aggregation for a table is as follows:
+    1. It reads data from input tables in Datalake and load it as spark Dataframe.
+    2. Perform the aggregation on the dataframe based on the business logic.
+    3. Write the data back to Datalake storage.
+    4. Step 1 to 3 repeats for different tables. At last when all the steps of aggregation are complete, load the data from Datalake Storage to Data warehouse storage which is Postgres. Dashboard will use this postgres to seek its Data.
 
 
 ## Dependencies
@@ -32,8 +40,8 @@ This is an Spark Application Which is used to ingest Form and Case Data into the
 2. **Java8**: Used by Spark.
 3. **Scala 1.12**: Used by Spark.
 2. **Spark 3.0.2**: Spark is used as a processing engine to process the incoming data.
-3. **Object Storage/HDFS(3.2)**: Used to store the Data. Right now using S3. The repository can also be used with Local Filesystem
-4. **Commcare Hq**: It uses Commcare Hq to pull Forms/cases records, Locations, user info from HQ Storage
+3. **Object Storage/HDFS(3.2)**: Used to store the Data. Right now using S3. The repository can also be used with Local Filesystem for local setup
+4. **Commcare Hq**: It uses CommcareHq code to pull Forms/cases records, Locations, user info from HQ Storage
 5. **Postgres**: Postgres is used as a hive metastore to store hive table tables.
 
 
@@ -47,7 +55,9 @@ This is an Spark Application Which is used to ingest Form and Case Data into the
 - [x] Capture Form deletes
 - [x] Capture case deletes
 - [x] Capture Location Changes
-- [ ] Allows Field datatype change in cases/forms
+- [x] Allow Data aggregation(In progress, Half way through)
+- [ ] Allows Field datatype change in cases/forms during ingestion
+
 
 ## How to Setup
 
@@ -112,13 +122,13 @@ https://spark.apache.org/downloads.html
     ```
 
 ### Setup Hive Metastore
-Metastore is used to store the metatables for the data you are writing to the datalake using Spark. By default it stores the meta info into the local dist and in the directory from where you are running the spark application. But it has two problems:
-1. It would be difficult to share the metainformation between spark applications. Eg: If Aggregation wants to access the tables created by Datalake ingestion.
-2. Storing the data directory into local disk might not be safe and we would have to separately manage its appropriate availability and security.
+Metastore is used to store the metatables for the data you are writing to the datalake using Spark. Hive metastore also speed ups the queries it stores all the meta information about the data like Columns, Partitions etc. By default spark stores the meta info into the local disk and in the directory from where you are running the spark application. But it has two problems:
+1. It would be difficult to share the meta information between spark applications. Eg: If Aggregation wants to access the tables created by Datalake ingestion. It can directly access from storage but not through Metastore.
+2. Storing the data directly into local disk might not be safe and we would have to separately manage its appropriate availability and security.
 
 So, we will setup a central hive metastore using postgres and tell Spark to use that as a metastore.
 
-1. Install Postgres. You can also use HQ postgres if you have that setup.
+1. Install Postgres. You can also use HQ postgres for your local setup.
 2. Create a Database named `metastore_db`
 3. Download following Migration files:
     ```
@@ -245,7 +255,7 @@ spark-submit --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-s
 ```
 
 ## Spark Thrift Server(STS)
-Its an spark application comes with the spark package. When you run it, it allows external applications to connect to it as a JDBC Client and query the data using SQL queries same as quering any other SQL database like Postgres. You can read about it more [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html). We need this because we want to allow internal/external users to query the data using BI tool and BI tool needs to connect to SPARK cluster as a client. Run the following command to start the Spark Thrift Server for our setup:
+Its a spark application comes with the spark package. When you run it, it allows external applications to connect to it as a JDBC Client and query the data stored in Datalake using SQL queries same as quering any other SQL database like Postgres. You can read about it more [here](https://spark.apache.org/docs/latest/sql-distributed-sql-engine.html). We need this because we want to allow internal/external users to query the data using BI tool and BI tool needs to connect to SPARK cluster as a JDBC client. Run the following command to start the Spark Thrift Server for our setup:
 
 ```
 $SPARK_HOME/sbin/start-thriftserver.sh --packages "io.delta:delta-core_2.12:0.8.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.1" --conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" --conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension"
@@ -259,7 +269,7 @@ Now to test it as a client from cli. Spark Package comes with a CLI tool called 
 ```
 
 ## BI tool
-BI tools are great to see the quick visualization of the data and to query data fast. For this System We are using Metabase as our BI tool. Setting up Metabase is pretty simple. We are using Jar method to run the Metabase([here](https://www.metabase.com/docs/latest/operations-guide/installing-metabase.html)). 
+BI tools are great to see the quick visualization of the data and to query data fast through a web UI. For this System We are using Metabase as our BI tool. Setting up Metabase is pretty simple. We are using Jar method to run the Metabase([here](https://www.metabase.com/docs/latest/operations-guide/installing-metabase.html)). 
 After Downloading Jar you just need to run:
 ```
 java -jar metabase.jar
