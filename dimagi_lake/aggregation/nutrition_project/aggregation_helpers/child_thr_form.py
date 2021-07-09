@@ -1,29 +1,30 @@
-from dimagi_lake.aggregation.aggregation_helpers.base_helper import BaseAggregationHelper
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.base_helper import BaseAggregationHelper
 from spark_session_handler import SPARK
 
 
-class SupplementaryNutritionAggregationHelper(BaseAggregationHelper):
+class ChildTHRAggregationHelper(BaseAggregationHelper):
 
     @property
     def source_tablename(self):
-        return f"{self.database_name}.raw_child_snd_form"
+        return f"{self.database_name}.raw_child_thr_form"
 
     @property
     def columns(self):
         return {
             'children_cases': (
                 'form',
-                'children_cases',
+                'children_0_3_cases',
                 'item'
             ),
-            'present_children': (
+            'children_received_thr_id': (
                 'form',
-                'children_attendance',
-                'present_children'
+                'thr_details_group',
+                'children_received_thr_id'
             ),
-            "children_food_served": (
+            'number_of_days_thr_given': (
                 'form',
-                'children_food_served'
+                'thr_details_group',
+                'number_of_days_thr_given'
             ),
             "timeend": (
                 'form',
@@ -39,23 +40,18 @@ class SupplementaryNutritionAggregationHelper(BaseAggregationHelper):
         return self.enforce_schema(df)
 
     def preprocess(self):
-        df1 = SPARK.sql(f"""
+        return SPARK.sql(f"""
         SELECT  
             children.`@id` as child_case_id,
             date_trunc('DAY', {self.get_column('timeend')}) as timeend,
-            CASE 
-                WHEN array_contains(split({self.get_column('present_children')}, ' '), children.`@id`) THEN 1 
-                ELSE 0 
-            END as pse_attended,
-            CASE 
-                WHEN array_contains(split({self.get_column('children_food_served')}, ' '), children.`@id`) THEN 1
+            CASE
+                WHEN array_contains(split({self.get_column('children_received_thr_id')}, ' '), children.`@id`) THEN {self.get_column('number_of_days_thr_given')}
                 ELSE 0
-            END as snd_given
+            END as days_thr_given
         from {self.source_tablename}
         LATERAL VIEW explode({self.get_column('children_cases')}) as children
         WHERE month='{self.month}'
         """)
-        return df1
 
     def aggregate_data(self, df):
         df.createOrReplaceTempView('pass1')
@@ -66,8 +62,7 @@ class SupplementaryNutritionAggregationHelper(BaseAggregationHelper):
             '{self.domain}' as domain,
             '{self.month}' as month,
             max(timeend) as last_timeend_processed,
-            sum(pse_attended) as total_pse_attended,
-            sum(snd_given) as total_snd_given
+            sum(days_thr_given) as days_thr_given
         FROM pass1
         GROUP BY child_case_id
         """)

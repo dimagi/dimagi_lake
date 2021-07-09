@@ -1,7 +1,7 @@
 import datetime
 
 from consts import SERVICE_ENROLLMENT_TABLE
-from dimagi_lake.aggregation.aggregation_helpers.base_helper import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.base_helper import \
     BaseAggregationHelper
 from spark_session_handler import SPARK
 

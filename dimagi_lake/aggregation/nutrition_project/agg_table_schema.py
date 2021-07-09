@@ -8,23 +8,23 @@ from consts import (CHILD_CARE_MONTHLY_TABLE, FLWC_LOCATION_TABLE,
                     SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE, 
                     CHILD_THR_FORM_TABLE, SUPPLEMENTARY_NUTRITION_FORM_TABLE,
                     AGG_CHILD_CARE_TABLE)
-from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.agg_location import \
     AggLocationHelper
-from dimagi_lake.aggregation.aggregation_helpers.child_care_monthly import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.child_care_monthly import \
     ChildCareMonthlyAggregationHelper
-from dimagi_lake.aggregation.aggregation_helpers.child_weight_height_form import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.child_weight_height_form import \
     ChildWeightHeightAggregationHelper
-from dimagi_lake.aggregation.aggregation_helpers.service_enrollment_form import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.service_enrollment_form import \
     ServiceEnrollmentAggregationHelper
-from dimagi_lake.aggregation.aggregation_helpers.child_snd_form import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.child_snd_form import \
     SupplementaryNutritionAggregationHelper
-from dimagi_lake.aggregation.aggregation_helpers.child_thr_form import \
+from dimagi_lake.aggregation.nutrition_project.aggregation_helpers.child_thr_form import \
     ChildTHRAggregationHelper
 
-from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
-                                                   connect_to_db, create_table,
-                                                   detach_partition,
-                                                   drop_table, rename_table)
+from dimagi_lake.aggregation.nutrition_project.sql.sql_utils import (attach_partition,
+                                                                     connect_to_db, create_table,
+                                                                     detach_partition,
+                                                                     drop_table, rename_table)
 from dimagi_lake.utils import clean_name, get_db_name
 from spark_session_handler import SPARK
 

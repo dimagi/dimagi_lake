@@ -277,7 +277,7 @@ java -jar metabase.jar
 Above page linked shows the setup steps in detail.
 After Metabase if setup, you can add a database and select the database type as Spark-SQL and put the credentials.
 
-
+Note: Metabase's technique to find the columns is not as perfect(perhaps just for spark-sql). It may also see some extra things as columns when they are not because of which you can go to the admin and see the table and hide all the invalid columns. It should work fine after that.
 ## FAQ
 
 1. Why are we processing records in Chunks and not as per records bases like a true stream?

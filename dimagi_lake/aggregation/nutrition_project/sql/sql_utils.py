@@ -1,7 +1,7 @@
 import psycopg2
 
 import env_settings
-from dimagi_lake.aggregation.sql import sql_queries
+from dimagi_lake.aggregation.nutrition_project.sql import sql_queries
 
 
 def connect_to_db():
@@ -13,7 +13,7 @@ def connect_to_db():
 
 
 def create_table(cur, base_table, table_name, domain):
-    query = sql_queries.create_domain_table_query(base_table,table_name, domain)
+    query = sql_queries.create_domain_table_query(base_table, table_name, domain)
     cur.execute(query)
 
 
