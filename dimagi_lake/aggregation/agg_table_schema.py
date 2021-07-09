@@ -5,13 +5,20 @@ from pyspark.sql.types import (DateType, DoubleType, IntegerType, StringType,
 
 import env_settings
 from consts import (CHILD_CARE_MONTHLY_TABLE, FLWC_LOCATION_TABLE,
-                    SERVICE_ENROLLMENT_TABLE)
+                    SERVICE_ENROLLMENT_TABLE, CHILD_WEIGHT_HEIGHT_FORM_TABLE, CHILD_THR_FORM_TABLE, SUPPLEMENTARY_NUTRITION_FORM_TABLE)
 from dimagi_lake.aggregation.aggregation_helpers.agg_location import \
     AggLocationHelper
 from dimagi_lake.aggregation.aggregation_helpers.child_care_monthly import \
     ChildCareMonthlyAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.child_weight_height_form import \
+    ChildWeightHeightAggregationHelper
 from dimagi_lake.aggregation.aggregation_helpers.service_enrollment_form import \
     ServiceEnrollmentAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.child_snd_form import \
+    SupplementaryNutritionAggregationHelper
+from dimagi_lake.aggregation.aggregation_helpers.child_thr_form import \
+    ChildTHRAggregationHelper
+
 from dimagi_lake.aggregation.sql.sql_utils import (attach_partition,
                                                    connect_to_db, create_table,
                                                    detach_partition,
@@ -37,6 +44,14 @@ class BaseTable(ABC):
         self._database_name = get_db_name(domain)
         self.datalake_tablename = f"{clean_name(self._database_name)}.{clean_name(self._warehouse_base_table)}"
         self.datalake_tablepath = f'{env_settings.AGG_DATA_PATH}/{self._domain}/{self._warehouse_base_table}'
+
+    def aggregate(self):
+        aggregator = self._aggregator(self._database_name,
+                                      self._domain,
+                                      self._month,
+                                      self.schema)
+        agg_df = aggregator.aggregate()
+        self.write_monthly_data(agg_df)
 
     def write_to_datalake(self, df):
         """
@@ -94,7 +109,6 @@ class FlwcLocation(BaseTable):
                                       self.schema)
         agg_df = aggregator.aggregate()
         self.write_to_datalake(agg_df)
-        # agg_df.show(110,False)
 
     def write_to_warehouse(self):
         """
@@ -158,19 +172,17 @@ class ChildCareMonthly(BaseTable):
         StructField('birth_weight', DoubleType(), True),
         StructField('low_birth_weight', IntegerType(), True),
         StructField('immediate_bf', IntegerType(), True),
+        StructField('weight', DoubleType(), True),
+        StructField('height', DoubleType(), True),
+        StructField('zscore_grading_hfa', IntegerType(), True),
+        StructField('zscore_grading_wfh', IntegerType(), True),
+        StructField('zscore_grading_wfa', IntegerType(), True)
+
     ])
 
     _aggregator = ChildCareMonthlyAggregationHelper
     _warehouse_base_table = CHILD_CARE_MONTHLY_TABLE
     _partition_columns = ('month',)
-
-    def aggregate(self):
-        aggregator = self._aggregator(self._database_name,
-                                      self._domain,
-                                      self._month,
-                                      self.schema)
-        agg_df = aggregator.aggregate()
-        self.write_monthly_data(agg_df)
 
 
 class ServiceEnrollment(BaseTable):
@@ -188,10 +200,52 @@ class ServiceEnrollment(BaseTable):
     _warehouse_base_table = SERVICE_ENROLLMENT_TABLE
     _partition_columns = ('month',)
 
-    def aggregate(self):
-        aggregator = self._aggregator(self._database_name,
-                                      self._domain,
-                                      self._month,
-                                      self.schema)
-        agg_df = aggregator.aggregate()
-        self.write_monthly_data(agg_df)
+
+class ChildWeightHeightForm(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('child_case_id', StringType(), True),
+        StructField('weight', DoubleType(), True),
+        StructField('last_weight_recorded_date', DateType(), True),
+        StructField('height', DoubleType(), True),
+        StructField('last_height_recorded_date', DateType(), True),
+        StructField('zscore_grading_hfa', StringType(), True),
+        StructField('last_zscore_grading_hfa_recorded_date', DateType(), True),
+        StructField('zscore_grading_wfh', StringType(), True),
+        StructField('last_zscore_grading_wfh_recorded_date', DateType(), True),
+        StructField('zscore_grading_wfa', StringType(), True),
+        StructField('last_zscore_grading_wfa_recorded_date', DateType(), True),
+    ])
+
+    _aggregator = ChildWeightHeightAggregationHelper
+    _warehouse_base_table = CHILD_WEIGHT_HEIGHT_FORM_TABLE
+    _partition_columns = ('month',)
+
+
+class SupplementaryNutritionForm(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('last_timeend_processed', DateType(), True),
+        StructField('child_case_id', StringType(), True),
+        StructField('total_pse_attended', IntegerType(), True),
+        StructField('total_snd_given', IntegerType(), True),
+    ])
+
+    _aggregator = SupplementaryNutritionAggregationHelper
+    _warehouse_base_table = SUPPLEMENTARY_NUTRITION_FORM_TABLE
+    _partition_columns = ('month',)
+
+
+class ChildTHRForm(BaseTable):
+    schema = StructType(fields=[
+        StructField('domain', StringType(), True),
+        StructField('month', DateType(), True),
+        StructField('child_case_id', StringType(), True),
+        StructField('days_thr_given', IntegerType(), True)
+    ])
+
+    _aggregator = ChildTHRAggregationHelper
+    _warehouse_base_table = CHILD_THR_FORM_TABLE
+    _partition_columns = ('month',)
